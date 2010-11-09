@@ -1,0 +1,18 @@
+<package>
+  <description brief="velodyne_hdl_64ES2">
+
+     ROS driver for Velodyne HDL 64E S2.
+	 Based on libvelodyne from ETHZ-ASL.
+
+  </description>
+  <author>Stéphane Magnenat</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/velodyne_hdl_64ES2</url>
+  <depend package="roscpp"/>
+  <depend package="std_msgs"/>
+  <depend package="sensor_msgs"/>
+
+</package>
+
+
