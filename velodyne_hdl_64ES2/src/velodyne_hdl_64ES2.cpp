@@ -11,24 +11,38 @@ using namespace std;
 
 int main(int argc, char **argv)
 {
-	ros::init(argc, argv, "velodyne_hdl_64ES2");
+	ros::init(argc, argv, "velodyne");
 	ros::NodeHandle n;
 	ros::Publisher pointCloudPub = n.advertise<sensor_msgs::PointCloud>("/velodyne/cloud", 16);
 	
 	// read calibration
 	VelodyneCalibration vdyneCalibration;
 	string calibrationFileName;
-	n.param<string>("calibrationFileName", calibrationFileName, "calib.dat");
+	n.param<string>("/velodyne/calibrationFileName", calibrationFileName, "calib.dat");
 	ifstream calibFile(calibrationFileName.c_str());
+	if (!calibFile.good())
+	{
+		cerr << "Cannot open calibration file " << calibrationFileName << endl;
+		return 1;
+	}
 	calibFile >> vdyneCalibration;
 	
 	// Velodyne connection
 	AcquisitionThread acqThread;
 	acqThread.run();
 	
+	unsigned counter = 0;
 	while (ros::ok())
 	{
+		// show statistics
+		//if ((++counter) % 100 == 0)
+			ROS_INFO_STREAM("Average packet dropped: " << acqThread.getQueueDroppedPackages() << " %"); 
 		// get velodyne packet and transform it
+		while (acqThread.getQueueContent() == 0)
+		{
+			ros::spinOnce();
+			usleep(1000);
+		}
 		boost::shared_ptr<VelodynePacket> vdynePacket(acqThread.getPacket());
 		VelodynePointCloud vdynePointCloud(*vdynePacket, vdyneCalibration);
 		
@@ -36,19 +50,27 @@ int main(int argc, char **argv)
 		const VelodynePointCloud::Point3DVectorConstIterator vdyneCloudStart(vdynePointCloud.getStartIterator());
 		const VelodynePointCloud::Point3DVectorConstIterator vdyneCloudEnd(vdynePointCloud.getEndIterator());
 		const size_t vdynePointCount(vdyneCloudEnd-vdyneCloudStart);
-		sensor_msgs::PointCloud rosPointCloud;
-		rosPointCloud.points.reserve(vdynePointCount);
+		
+		sensor_msgs::PointCloudPtr rosCloud(new sensor_msgs::PointCloud);
+		rosCloud->header.stamp = ros::Time::now();
+		rosCloud->header.frame_id = "/velodyne";
+		rosCloud->points.reserve(vdynePointCount);
+		rosCloud->channels.resize(1);
+		rosCloud->channels[0].name = "intensity";
+		rosCloud->channels[0].values.reserve(vdynePointCount);
 		for (VelodynePointCloud::Point3DVectorConstIterator it(vdyneCloudStart); it != vdyneCloudEnd; ++it)
 		{
 			geometry_msgs::Point32 rosPoint;
 			rosPoint.x = it->mf64X;
 			rosPoint.y = it->mf64Y;
 			rosPoint.z = it->mf64Z;
-			rosPointCloud.points.push_back(rosPoint);
+			rosCloud->points.push_back(rosPoint);
+			rosCloud->channels[0].values.push_back(it->mu8Intensity);
 		}
+		cerr << vdynePointCount << " points" << endl;
 		
 		// publish point cloud
-		pointCloudPub.publish(rosPointCloud);
+		pointCloudPub.publish(rosCloud);
 		ros::spinOnce();
 	}
 	
