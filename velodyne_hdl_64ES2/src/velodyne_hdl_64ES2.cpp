@@ -1,41 +1,50 @@
 #include "ros/ros.h"
 #include "sensor_msgs/PointCloud.h"
-#include "UDPConnection.h"
-#include "VelodynePacket.h"
+#include "AcquisitionThread.h"
+#include "VelodyneCalibration.h"
+#include "VelodynePointCloud.h"
+#include <iostream>
+#include <fstream>
+#include <string>
+
+using namespace std;
 
 int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "velodyne_hdl_64ES2");
 	ros::NodeHandle n;
-	ros::Publisher pointCloudPub = n.advertise<sensor_msgs::PointCloud>("cloud", 16);
+	ros::Publisher pointCloudPub = n.advertise<sensor_msgs::PointCloud>("/velodyne/cloud", 16);
 	
 	// read calibration
 	VelodyneCalibration vdyneCalibration;
-	ifstream calibFile(argv[2]);
+	string calibrationFileName;
+	n.param<string>("calibrationFileName", calibrationFileName, "calib.dat");
+	ifstream calibFile(calibrationFileName.c_str());
 	calibFile >> vdyneCalibration;
 	
 	// Velodyne connection
-	UDPConnection com;
-	com.open();
+	AcquisitionThread acqThread;
+	acqThread.run();
 	
 	while (ros::ok())
 	{
 		// get velodyne packet and transform it
-		VelodynePacket vdynePacket;
-		com >> vdynePacket;
-		VelodynePointCloud vdynePointCloud(vdynePacket, vdyneCalibration);
+		boost::shared_ptr<VelodynePacket> vdynePacket(acqThread.getPacket());
+		VelodynePointCloud vdynePointCloud(*vdynePacket, vdyneCalibration);
 		
 		// create ROS point cloud
-		const size_t vdynePointCount(vdynePointCloud.mPointCloudVector.size());
+		const VelodynePointCloud::Point3DVectorConstIterator vdyneCloudStart(vdynePointCloud.getStartIterator());
+		const VelodynePointCloud::Point3DVectorConstIterator vdyneCloudEnd(vdynePointCloud.getEndIterator());
+		const size_t vdynePointCount(vdyneCloudEnd-vdyneCloudStart);
 		sensor_msgs::PointCloud rosPointCloud;
 		rosPointCloud.points.reserve(vdynePointCount);
-		for (size_t i = 0; i < vdynePointCount; ++i)
+		for (VelodynePointCloud::Point3DVectorConstIterator it(vdyneCloudStart); it != vdyneCloudEnd; ++it)
 		{
 			geometry_msgs::Point32 rosPoint;
-			rosPoint.x = vdynePointCloud.mPointCloudVector[i].mf64X;
-			rosPoint.y = vdynePointCloud.mPointCloudVector[i].mf64Y;
-			rosPoint.z = vdynePointCloud.mPointCloudVector[i].mf64Z;
-			rosPointCloud.push_back(rosPoint);
+			rosPoint.x = it->mf64X;
+			rosPoint.y = it->mf64Y;
+			rosPoint.z = it->mf64Z;
+			rosPointCloud.points.push_back(rosPoint);
 		}
 		
 		// publish point cloud

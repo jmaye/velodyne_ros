@@ -21,19 +21,19 @@ find_path(LIBVELODYNE_INCLUDE_DIR sensor/VelodynePointCloud.h
 	/usr/local/include
 	/usr/include
 )
-find_library(LIBVELODYNE_COM_LIBRARY velodyne-com
+find_library(LIBVELODYNE_ACQUISITION_LIBRARY velodyne-acquisition
 	/usr/local/lib
 	/usr/lib
 )
-find_library(LIBVELODYNE_SENSOR_LIBRARY velodyne-sensor
+find_library(LIBVELODYNE_ACQUISITION_SENSOR velodyne-sensor
 	/usr/local/lib
 	/usr/lib
 )
-include_directories(${LIBVELODYNE_INCLUDE_DIR}/com ${LIBVELODYNE_INCLUDE_DIR}/sensor ${LIBVELODYNE_INCLUDE_DIR}/exceptions)
 
-#common commands for building c++ executables and libraries
-#rosbuild_add_library(${PROJECT_NAME} src/example.cpp)
-#target_link_libraries(${PROJECT_NAME} another_library)
-#rosbuild_add_boost_directories()
-#rosbuild_link_boost(${PROJECT_NAME} thread)
-rosbuild_add_executable(velodyne_hdl_64ES2 src/velodyne_hdl_64ES2.cpp ${LIBVELODYNE_COM_LIBRARY} ${LIBVELODYNE_SENSOR_LIBRARY})
+include_directories(${LIBVELODYNE_INCLUDE_DIR}/com ${LIBVELODYNE_INCLUDE_DIR}/sensor ${LIBVELODYNE_INCLUDE_DIR}/exceptions ${LIBVELODYNE_INCLUDE_DIR}/acquisition ${LIBVELODYNE_INCLUDE_DIR}/buffer)
+
+rosbuild_add_executable(velodyne_hdl_64ES2 src/velodyne_hdl_64ES2.cpp)
+target_link_libraries(velodyne_hdl_64ES2
+	${LIBVELODYNE_ACQUISITION_LIBRARY}
+	${LIBVELODYNE_ACQUISITION_SENSOR}
+)
