@@ -67,7 +67,6 @@ int main(int argc, char **argv)
 			rosCloud->points.push_back(rosPoint);
 			rosCloud->channels[0].values.push_back(it->mu8Intensity);
 		}
-		cerr << vdynePointCount << " points" << endl;
 		
 		// publish point cloud
 		pointCloudPub.publish(rosCloud);

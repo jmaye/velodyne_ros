@@ -1,0 +1,18 @@
+<launch>
+	<node name="tf_FRAMEID_LASER" pkg="tf" type="static_transform_publisher" args="0.0 0.0 0.0 0.0 0.0 0 /world /velodyne 500" respawn="false">
+	</node>
+	
+	<node name="velodyne_assembler" type="point_cloud_assembler" pkg="laser_assembler">
+		<remap from="cloud" to="/velodyne/cloud"/>
+		<param name="max_clouds" type="int" value="1000" />
+		<param name="fixed_frame" type="string" value="/world" />
+	</node>
+	
+	<node name="snapshotter" type="periodic_window_snapshotter" pkg="periodic_window_snapshotter">
+		<param name="publish_rate" type="double" value="5" />
+		<param name="window_size" type="double" value="0.2" />
+	</node>
+	
+	<node name="velodyne" pkg="velodyne_hdl_64ES2" type="velodyne_hdl_64ES2">
+	</node>
+</launch>
