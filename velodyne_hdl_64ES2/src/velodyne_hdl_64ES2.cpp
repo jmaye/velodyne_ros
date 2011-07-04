@@ -1,8 +1,8 @@
 #include "ros/ros.h"
 #include "sensor_msgs/PointCloud.h"
-#include "AcquisitionThread.h"
-#include "VelodyneCalibration.h"
-#include "VelodynePointCloud.h"
+#include "acquisition/AcquisitionThread.h"
+#include "sensor/VelodyneCalibration.h"
+#include "sensor/VelodynePointCloud.h"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -61,11 +61,11 @@ int main(int argc, char **argv)
 		for (VelodynePointCloud::Point3DVectorConstIterator it(vdyneCloudStart); it != vdyneCloudEnd; ++it)
 		{
 			geometry_msgs::Point32 rosPoint;
-			rosPoint.x = it->mf64X;
-			rosPoint.y = it->mf64Y;
-			rosPoint.z = it->mf64Z;
+			rosPoint.x = it->mX;
+			rosPoint.y = it->mY;
+			rosPoint.z = it->mZ;
 			rosCloud->points.push_back(rosPoint);
-			rosCloud->channels[0].values.push_back(it->mu8Intensity);
+			rosCloud->channels[0].values.push_back(it->mIntensity);
 		}
 		
 		// publish point cloud
