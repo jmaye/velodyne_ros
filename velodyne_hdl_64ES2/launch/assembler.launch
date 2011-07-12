@@ -1,0 +1,16 @@
+<launch>
+
+	
+  <node name="velodyne_assembler" type="point_cloud_assembler" pkg="laser_assembler">
+    <remap from="cloud" to="/velodyne/cloud"/>
+    <param name="max_clouds" type="int" value="10000" />
+    <param name="fixed_frame" type="string" value="/world" />
+  </node>
+  
+  <node name="snapshotter" type="periodic_window_snapshotter" pkg="periodic_window_snapshotter">
+    <param name="publish_rate" type="double" value="5" />
+    <param name="window_size" type="double" value="1.0" />
+  </node>
+
+
+</launch>

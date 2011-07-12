@@ -7,7 +7,7 @@ include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
 #  Release        : w/o debug symbols, w/ optimization
 #  RelWithDebInfo : w/ debug symbols, w/ optimization
 #  MinSizeRel     : w/o debug symbols, w/ optimization, stripped binaries
-#set(ROS_BUILD_TYPE RelWithDebInfo)
+set(ROS_BUILD_TYPE Release)
 
 rosbuild_init()
 
@@ -18,9 +18,14 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 # libvelodyne
 find_path(LIBVELODYNE_INCLUDE_DIR sensor/VelodynePointCloud.h
-	/usr/local/include
-	/usr/include
+  /usr/local/include
+  /usr/include
+  PATH_SUFFIXES
+  libvelodyne
 )
+
+message(Found ${LIBVELODYNE_INCLUDE_DIR})
+
 find_library(LIBVELODYNE_ACQUISITION_LIBRARY velodyne-acquisition
 	/usr/local/lib
 	/usr/lib
@@ -30,7 +35,14 @@ find_library(LIBVELODYNE_ACQUISITION_SENSOR velodyne-sensor
 	/usr/lib
 )
 
-include_directories(${LIBVELODYNE_INCLUDE_DIR}/com ${LIBVELODYNE_INCLUDE_DIR}/sensor ${LIBVELODYNE_INCLUDE_DIR}/exceptions ${LIBVELODYNE_INCLUDE_DIR}/acquisition ${LIBVELODYNE_INCLUDE_DIR}/buffer)
+include_directories(
+  ${LIBVELODYNE_INCLUDE_DIR}
+  ${LIBVELODYNE_INCLUDE_DIR}/com 
+  ${LIBVELODYNE_INCLUDE_DIR}/sensor 
+  ${LIBVELODYNE_INCLUDE_DIR}/exceptions 
+  ${LIBVELODYNE_INCLUDE_DIR}/acquisition 
+  ${LIBVELODYNE_INCLUDE_DIR}/buffer
+  )
 
 rosbuild_add_executable(velodyne_hdl_64ES2 src/velodyne_hdl_64ES2.cpp)
 target_link_libraries(velodyne_hdl_64ES2

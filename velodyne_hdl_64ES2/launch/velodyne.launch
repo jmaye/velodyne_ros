@@ -1,0 +1,27 @@
+<launch>
+  <!-- 
+       The rpm that the laser should spin at. 
+       Valid values are from 300 to 900. 
+       The default, 0, will result in the driver
+       not setting the laser rpms. This is useful 
+       if the serial connection to the laser is not 
+       avialable
+    -->
+  <arg name="spin_rate_rpm" default="0"/>
+  
+  <!-- should we run the point cloud assembler? This is useful for visualization -->
+  <arg name="run_point_cloud_assembler" default="true"/>
+
+  <node name="velodyne" pkg="velodyne_hdl_64ES2" type="velodyne_hdl_64ES2" output="screen">
+    <param name="calibrationFileName" value="$(find velodyne_hdl_64ES2)/calib.dat"/>
+    <param name="spin_rate_rpm" value="$(arg spin_rate_rpm)"/>
+  </node>
+
+  <node name="tf_FRAMEID_LASER" pkg="tf" type="static_transform_publisher" args="0.0 0.0 0.0 0.0 0.0 0 /world /velodyne 500" respawn="false">
+  </node>
+
+  <group if="$(arg run_point_cloud_assembler)">
+    <include file="$(find velodyne_hdl_64ES2)/launch/assembler.launch"/>
+  </group>
+
+</launch>
