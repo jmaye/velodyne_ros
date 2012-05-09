@@ -17,7 +17,7 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 # libvelodyne
-find_path(LIBVELODYNE_INCLUDE_DIR sensor/VelodynePointCloud.h
+find_path(LIBVELODYNE_INCLUDE_DIR sensor/AcquisitionThread.h
   /usr/local/include
   /usr/include
   PATH_SUFFIXES
@@ -26,11 +26,7 @@ find_path(LIBVELODYNE_INCLUDE_DIR sensor/VelodynePointCloud.h
 
 message(Found ${LIBVELODYNE_INCLUDE_DIR})
 
-find_library(LIBVELODYNE_ACQUISITION_LIBRARY velodyne-acquisition
-	/usr/local/lib
-	/usr/lib
-)
-find_library(LIBVELODYNE_ACQUISITION_SENSOR velodyne-sensor
+find_library(LIBVELODYNE_SENSOR_LIBRARY velodyne-sensor
 	/usr/local/lib
 	/usr/lib
 )
@@ -40,8 +36,6 @@ include_directories(
   ${LIBVELODYNE_INCLUDE_DIR}/com 
   ${LIBVELODYNE_INCLUDE_DIR}/sensor 
   ${LIBVELODYNE_INCLUDE_DIR}/exceptions 
-  ${LIBVELODYNE_INCLUDE_DIR}/acquisition 
-  ${LIBVELODYNE_INCLUDE_DIR}/buffer
   )
 
 rosbuild_add_executable(velodyne_hdl_64ES2 src/velodyne_hdl_64ES2.cpp)

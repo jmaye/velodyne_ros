@@ -1,11 +1,13 @@
 #include "ros/ros.h"
 #include "sensor_msgs/PointCloud.h"
-#include "acquisition/AcquisitionThread.h"
-#include "sensor/VelodyneCalibration.h"
-#include "sensor/VelodynePointCloud.h"
-#include "sensor/VelodyneControl.h"
-#include "exceptions/IOException.h"
-#include "exceptions/OutOfBoundException.h"
+#include <libvelodyne/sensor/AcquisitionThread.h>
+#include <libvelodyne/sensor/Calibration.h>
+#include <libvelodyne/sensor/Controller.h>
+#include <libvelodyne/sensor/DataPacket.h>
+#include <libvelodyne/sensor/Converter.h>
+#include <libvelodyne/data-structures/VdynePointCloud.h>
+#include <libvelodyne/exceptions/IOException.h>
+#include <libvelodyne/exceptions/OutOfBoundException.h>
 
 #include <iostream>
 #include <fstream>
@@ -28,7 +30,7 @@ int main(int argc, char **argv)
       ros::Publisher pointCloudPub = n.advertise<sensor_msgs::PointCloud>("/velodyne/cloud", 16);
 	
       // read calibration
-      VelodyneCalibration vdyneCalibration;
+      Calibration vdyneCalibration;
       string calibrationFileName;
       n.param<string>("/velodyne/calibrationFileName", calibrationFileName, "calib.dat");
       ifstream calibFile(calibrationFileName.c_str());
@@ -63,16 +65,18 @@ int main(int argc, char **argv)
           // Scope this part so it goes away after we set the rpms.
           {
             ROS_DEBUG_STREAM("Setting velodyne to spin at " << rpms << " rpms using serial interface " << ttyIface);
-            VelodyneControl controller(ttyIface);
+            SerialConnection serialConnection(ttyIface);
+            Controller controller(serialConnection);
             controller.setRPM(rpms);
             ROS_DEBUG_STREAM("Successfully set the velodyne rpm parameters");
           }
         } // end if we are setting the laser spin rate
 
       // Velodyne connection
-      AcquisitionThread acqThread;
-      acqThread.setQueueCapacity(100000);
-      acqThread.run();
+      UDPConnectionServer connection(2368);
+      AcquisitionThread<DataPacket> acqThread;
+      acqThread.getBuffer().setCapacity(100000);
+      acqThread.start();
 	
       unsigned counter = 0;
       int lastDropped=0;
@@ -81,13 +85,13 @@ int main(int argc, char **argv)
           // show statistics
           if ((++counter) % 10000 == 0)
             {
-              int queueDepth = acqThread.getQueueContent();
+              int queueDepth = acqThread.getBuffer().getSize();
               if(queueDepth != 0)
                 {
                   ROS_WARN_STREAM("Queued velodyne packets: " << queueDepth);
                 }
 
-              int dropped = acqThread.getQueueDroppedPackages();
+              int dropped = acqThread.getBuffer().getNumDroppedElements();
               if(dropped != lastDropped)
                 {
                   ROS_INFO_STREAM("Number of packets dropped: " << dropped);
@@ -95,19 +99,20 @@ int main(int argc, char **argv)
                 } 
             }
           // get velodyne packet and transform it
-          while (acqThread.getQueueContent() == 0)
+          while (acqThread.getBuffer().isEmpty())
             {
               //ros::spinOnce();
               //usleep(100);
             }
 
-          boost::shared_ptr<VelodynePacket> vdynePacket(acqThread.getPacket());
+          boost::shared_ptr<DataPacket> vdynePacket(acqThread.getBuffer().dequeue());
           ros::Time acqTime(vdynePacket->getTimestamp());
-          VelodynePointCloud vdynePointCloud(*vdynePacket, vdyneCalibration);
+          VdynePointCloud vdynePointCloud;
+          Converter::toPointCloud(*vdynePacket, vdyneCalibration, vdynePointCloud);
 		
           // create ROS point cloud
-          const VelodynePointCloud::Point3DVectorConstIterator vdyneCloudStart(vdynePointCloud.getStartIterator());
-          const VelodynePointCloud::Point3DVectorConstIterator vdyneCloudEnd(vdynePointCloud.getEndIterator());
+          const VdynePointCloud::ConstPointIterator vdyneCloudStart(vdynePointCloud.getStartIterator());
+          const VdynePointCloud::ConstPointIterator vdyneCloudEnd(vdynePointCloud.getEndIterator());
           const size_t vdynePointCount(vdyneCloudEnd-vdyneCloudStart);
           
           sensor_msgs::PointCloudPtr rosCloud(new sensor_msgs::PointCloud);
