@@ -27,19 +27,15 @@ find_path(LIBVELODYNE_INCLUDE_DIR sensor/AcquisitionThread.h
 message(Found ${LIBVELODYNE_INCLUDE_DIR})
 
 find_library(LIBVELODYNE_SENSOR_LIBRARY velodyne-sensor
-	/usr/local/lib
-	/usr/lib
+  /usr/local/lib
+  /usr/lib
 )
 
 include_directories(
   ${LIBVELODYNE_INCLUDE_DIR}
-  ${LIBVELODYNE_INCLUDE_DIR}/com 
-  ${LIBVELODYNE_INCLUDE_DIR}/sensor 
-  ${LIBVELODYNE_INCLUDE_DIR}/exceptions 
-  )
+)
 
 rosbuild_add_executable(velodyne_hdl_64ES2 src/velodyne_hdl_64ES2.cpp)
 target_link_libraries(velodyne_hdl_64ES2
-	${LIBVELODYNE_ACQUISITION_LIBRARY}
-	${LIBVELODYNE_ACQUISITION_SENSOR}
+  ${LIBVELODYNE_SENSOR_LIBRARY}
 )

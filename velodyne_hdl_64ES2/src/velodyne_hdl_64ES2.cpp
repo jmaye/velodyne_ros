@@ -74,7 +74,7 @@ int main(int argc, char **argv)
 
       // Velodyne connection
       UDPConnectionServer connection(2368);
-      AcquisitionThread<DataPacket> acqThread;
+      AcquisitionThread<DataPacket> acqThread(connection);
       acqThread.getBuffer().setCapacity(100000);
       acqThread.start();
 	
@@ -111,8 +111,8 @@ int main(int argc, char **argv)
           Converter::toPointCloud(*vdynePacket, vdyneCalibration, vdynePointCloud);
 		
           // create ROS point cloud
-          const VdynePointCloud::ConstPointIterator vdyneCloudStart(vdynePointCloud.getStartIterator());
-          const VdynePointCloud::ConstPointIterator vdyneCloudEnd(vdynePointCloud.getEndIterator());
+          const VdynePointCloud::ConstPointIterator vdyneCloudStart(vdynePointCloud.getPointBegin());
+          const VdynePointCloud::ConstPointIterator vdyneCloudEnd(vdynePointCloud.getPointEnd());
           const size_t vdynePointCount(vdyneCloudEnd-vdyneCloudStart);
           
           sensor_msgs::PointCloudPtr rosCloud(new sensor_msgs::PointCloud);
@@ -123,7 +123,7 @@ int main(int argc, char **argv)
           rosCloud->channels.resize(1);
           rosCloud->channels[0].name = "intensity";
           rosCloud->channels[0].values.reserve(vdynePointCount);
-          for (VelodynePointCloud::Point3DVectorConstIterator it(vdyneCloudStart); it != vdyneCloudEnd; ++it)
+          for (VdynePointCloud::ConstPointIterator it(vdyneCloudStart); it != vdyneCloudEnd; ++it)
             {
               geometry_msgs::Point32 rosPoint;
               rosPoint.x = it->mX;
