@@ -105,7 +105,7 @@ int main(int argc, char **argv)
               //usleep(100);
             }
 
-          boost::shared_ptr<DataPacket> vdynePacket(acqThread.getBuffer().dequeue());
+          std::shared_ptr<DataPacket> vdynePacket(acqThread.getBuffer().dequeue());
           ros::Time acqTime(vdynePacket->getTimestamp());
           VdynePointCloud vdynePointCloud;
           Converter::toPointCloud(*vdynePacket, vdyneCalibration, vdynePointCloud);
