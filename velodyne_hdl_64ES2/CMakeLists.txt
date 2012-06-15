@@ -11,10 +11,14 @@ set(ROS_BUILD_TYPE Release)
 
 rosbuild_init()
 
+set(CMAKE_CXX_FLAGS "-std=c++0x")
+
 #set the default path for built executables to the "bin" directory
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 #set the default path for built libraries to the "lib" directory
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
+
+rosbuild_genmsg()
 
 # libvelodyne
 find_path(LIBVELODYNE_INCLUDE_DIR sensor/AcquisitionThread.h
@@ -37,5 +41,10 @@ include_directories(
 
 rosbuild_add_executable(velodyne_hdl_64ES2 src/velodyne_hdl_64ES2.cpp)
 target_link_libraries(velodyne_hdl_64ES2
+  ${LIBVELODYNE_SENSOR_LIBRARY}
+)
+
+rosbuild_add_executable(imu_velodyne_hdl_32E src/imu_velodyne_hdl_32E.cpp)
+target_link_libraries(imu_velodyne_hdl_32E
   ${LIBVELODYNE_SENSOR_LIBRARY}
 )
