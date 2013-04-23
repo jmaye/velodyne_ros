@@ -13,7 +13,7 @@
 		<param name="window_size" type="double" value="0.3" />
 	</node>
 	
-	<node name="velodyne" pkg="velodyne_hdl_64ES2" type="velodyne_hdl_64ES2" output="screen">
-          <param name="calibrationFileName" value="$(find velodyne_hdl_64ES2)/calib.dat"/>
+	<node name="velodyne" pkg="velodyne_ros" type="velodyne_ros" output="screen">
+          <param name="calibrationFileName" value="$(find velodyne_ros)/calib.dat"/>
         </node>
 </launch>

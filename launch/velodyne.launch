@@ -12,8 +12,8 @@
   <!-- should we run the point cloud assembler? This is useful for visualization -->
   <arg name="run_point_cloud_assembler" default="true"/>
 
-  <node name="velodyne" pkg="velodyne_hdl_64ES2" type="velodyne_hdl_64ES2" output="screen">
-    <param name="calibrationFileName" value="$(find velodyne_hdl_64ES2)/calib.dat"/>
+  <node name="velodyne" pkg="velodyne_ros" type="velodyne_ros" output="screen">
+    <param name="calibrationFileName" value="$(find velodyne_ros)/calib.dat"/>
     <param name="spin_rate_rpm" value="$(arg spin_rate_rpm)"/>
   </node>
 
@@ -21,7 +21,7 @@
   </node>
 
   <group if="$(arg run_point_cloud_assembler)">
-    <include file="$(find velodyne_hdl_64ES2)/launch/assembler.launch"/>
+    <include file="$(find velodyne_ros)/launch/assembler.launch"/>
   </group>
 
 </launch>

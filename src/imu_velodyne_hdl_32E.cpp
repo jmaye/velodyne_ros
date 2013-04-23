@@ -1,6 +1,6 @@
 #include "ros/ros.h"
 #include "sensor_msgs/Imu.h"
-#include "velodyne_hdl_64ES2/Temperature.h"
+#include "velodyne_ros/Temperature.h"
 #include <libvelodyne/sensor/AcquisitionThread.h>
 #include <libvelodyne/sensor/PositionPacket.h>
 #include <libvelodyne/exceptions/IOException.h>
@@ -26,7 +26,7 @@ int main(int argc, char **argv)
     {        
       // Publishers for IMU and temperature
       ros::Publisher imuPub = n.advertise<sensor_msgs::Imu>("/velodyne/imu", 10);
-      ros::Publisher tempPub = n.advertise<velodyne_hdl_64ES2::Temperature>("/velodyne/temperature", 10);
+      ros::Publisher tempPub = n.advertise<velodyne_ros::Temperature>("/velodyne/temperature", 10);
 	
       // connection
       UDPConnectionServer connection(8308);
@@ -86,7 +86,7 @@ int main(int argc, char **argv)
 	  imuMsg->header.frame_id = "/velodyne";
 	  
 	  // create ROS temperature message
-	  velodyne_hdl_64ES2::TemperaturePtr tempMsg(new velodyne_hdl_64ES2::Temperature);
+	  velodyne_ros::TemperaturePtr tempMsg(new velodyne_ros::Temperature);
 	  tempMsg->header.stamp = acqTime;
 	  tempMsg->header.frame_id = "/velodyne";
 	  
