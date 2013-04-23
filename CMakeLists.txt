@@ -22,7 +22,6 @@ rosbuild_genmsg()
 
 # libvelodyne
 find_path(LIBVELODYNE_INCLUDE_DIR sensor/AcquisitionThread.h
-  /usr/local/include
   /usr/include
   PATH_SUFFIXES
   libvelodyne
