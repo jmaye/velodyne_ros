@@ -2,7 +2,7 @@
 \mainpage
 \htmlinclude manifest.html
 
-\b velodyne-ros
+\b velodyne_ros
 
 <!-- 
 Provide an overview of your package.
