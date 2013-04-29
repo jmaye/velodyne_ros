@@ -12,7 +12,7 @@
   <!-- should we run the point cloud assembler? This is useful for visualization -->
   <arg name="run_point_cloud_assembler" default="true"/>
 
-  <node name="velodyne" pkg="velodyne_ros" type="velodyne_ros" output="screen">
+  <node name="velodyne" pkg="velodyne_ros" type="velodyne_hdl_64ES2" output="screen">
     <param name="calibrationFileName" value="$(find velodyne_ros)/calib.dat"/>
     <param name="spin_rate_rpm" value="$(arg spin_rate_rpm)"/>
   </node>
