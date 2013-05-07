@@ -11,5 +11,6 @@
   <depend package="roscpp"/>
   <depend package="std_msgs"/>
   <depend package="sensor_msgs"/>
+  <rosdep name="libvelodyne-dev"/>
 
 </package>
