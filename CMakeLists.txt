@@ -13,52 +13,30 @@ rosbuild_init()
 
 set(CMAKE_CXX_FLAGS "-std=c++0x")
 
-#set the default path for built executables to the "bin" directory
-set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
-#set the default path for built libraries to the "lib" directory
-set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
-
-rosbuild_genmsg()
-
 # libvelodyne
 find_path(LIBVELODYNE_INCLUDE_DIR sensor/AcquisitionThread.h
   /usr/include
   PATH_SUFFIXES
   libvelodyne
 )
-
 message(Found ${LIBVELODYNE_INCLUDE_DIR})
-
 find_library(LIBVELODYNE_SENSOR_LIBRARY velodyne-sensor
   /usr/lib
 )
-find_library(LIBVELODYNE_COM_LIBRARY velodyne-com
-  /usr/lib
-)
-find_library(LIBVELODYNE_BASE_LIBRARY velodyne-base
-  /usr/lib
-)
-find_library(LIBVELODYNE_EXCEPTIONS_LIBRARY velodyne-exceptions
-  /usr/lib
-)
-find_library(LIBVELODYNE_DATA_STRUCTURES_LIBRARY velodyne-data-structures
-  /usr/lib
-)
-
 include_directories(
   ${LIBVELODYNE_INCLUDE_DIR}
 )
 
-rosbuild_add_executable(velodyne_hdl_64ES2 src/velodyne_hdl_64ES2.cpp)
-target_link_libraries(velodyne_hdl_64ES2
-  ${LIBVELODYNE_SENSOR_LIBRARY} ${LIBVELODYNE_COM_LIBRARY}
-  ${LIBVELODYNE_BASE_LIBRARY} ${LIBVELODYNE_EXCEPTIONS_LIBRARY}
-  ${LIBVELODYNE_DATA_STRUCTURES_LIBRARY}
-)
+#set the default path for built executables to the "bin" directory
+set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
+#set the default path for built libraries to the "lib" directory
+set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
-rosbuild_add_executable(imu_velodyne_hdl_32E src/imu_velodyne_hdl_32E.cpp)
-target_link_libraries(imu_velodyne_hdl_32E
-  ${LIBVELODYNE_SENSOR_LIBRARY} ${LIBVELODYNE_COM_LIBRARY}
-  ${LIBVELODYNE_BASE_LIBRARY} ${LIBVELODYNE_EXCEPTIONS_LIBRARY}
-  ${LIBVELODYNE_DATA_STRUCTURES_LIBRARY}
-)
+rosbuild_genmsg()
+rosbuild_gensrv()
+
+#common commands for building c++ executables and libraries
+rosbuild_add_library(${PROJECT_NAME} src/VelodyneNode.cpp)
+target_link_libraries(${PROJECT_NAME} ${LIBVELODYNE_SENSOR_LIBRARY})
+rosbuild_add_executable(velodyne_node src/velodyne_node.cpp)
+target_link_libraries(velodyne_node ${PROJECT_NAME})

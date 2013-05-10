@@ -4,13 +4,14 @@
      ROS wrapper around libvelodyne.
 
   </description>
-  <author>Stéphane Magnenat</author>
+  <author>Jerome Maye</author>
   <license>LGPL</license>
   <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/velodyne-ros</url>
+  <url>http://ros.org/wiki/velodyne_ros</url>
+
   <depend package="roscpp"/>
-  <depend package="std_msgs"/>
   <depend package="sensor_msgs"/>
+  <depend package="diagnostic_updater"/>
   <rosdep name="libvelodyne-dev"/>
 
 </package>
