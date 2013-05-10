@@ -84,12 +84,15 @@ namespace janeth {
     void publishDataPacket(const ros::Time& timestamp, const DataPacket& dp);
     /// Publishes the position packet
     void publishPositionPacket(const ros::Time& timestamp, const PositionPacket&
-      dp);
+      pp);
     /// Set RPM service
     bool setRPM(velodyne_ros::SetRPM::Request& request,
       velodyne_ros::SetRPM::Response& response);
-    /// Diagnose the UDP connection
-    void diagnoseUDPConnection(diagnostic_updater::DiagnosticStatusWrapper&
+    /// Diagnose the UDP connection for data packets
+    void diagnoseUDPConnectionDP(diagnostic_updater::DiagnosticStatusWrapper&
+      status);
+    /// Diagnose the UDP connection for position packets
+    void diagnoseUDPConnectionPP(diagnostic_updater::DiagnosticStatusWrapper&
       status);
     /// Diagnose the serial connection
     void diagnoseSerialConnection(diagnostic_updater::DiagnosticStatusWrapper&
@@ -97,6 +100,9 @@ namespace janeth {
     /// Diagnose the data packet queue
     void diagnoseDataPacketQueue(diagnostic_updater::DiagnosticStatusWrapper&
       status);
+    /// Diagnose the position packet queue
+    void diagnosePositionPacketQueue(
+      diagnostic_updater::DiagnosticStatusWrapper& status);
     /** @}
       */
 
@@ -107,14 +113,26 @@ namespace janeth {
     ros::NodeHandle _nodeHandle;
     /// Point cloud publisher
     ros::Publisher _pointCloudPublisher;
+    /// Scan cloud publisher
+    ros::Publisher _scanCloudPublisher;
+    /// Data packet publisher
+    ros::Publisher _dataPacketPublisher;
+    /// IMU publisher
+    ros::Publisher _imuPublisher;
+    /// Temperature publisher
+    ros::Publisher _tempPublisher;
     /// Frame ID
     std::string _frameId;
     /// Device name
     std::string _deviceName;
-    /// Device Port
-    int _devicePort;
-    /// UDP connection
-    std::shared_ptr<UDPConnectionServer> _udpConnection;
+    /// Device port for data packets
+    int _devicePortDP;
+    /// UDP connection for data packets
+    std::shared_ptr<UDPConnectionServer> _udpConnectionDP;
+    /// Device port for position packets
+    int _devicePortPP;
+    /// UDP connection for position packets
+    std::shared_ptr<UDPConnectionServer> _udpConnectionPP;
     /// Serial device
     std::string _serialDeviceStr;
     /// Serial device baudrate
@@ -131,6 +149,12 @@ namespace janeth {
     double _dpMinFreq;
     /// Data packet maximum frequency
     double _dpMaxFreq;
+    /// Frequency diagnostic for position packet
+    std::shared_ptr<diagnostic_updater::HeaderlessTopicDiagnostic> _ppFreq;
+    /// Position packet minimum frequency
+    double _ppMinFreq;
+    /// Position packet maximum frequency
+    double _ppMaxFreq;
     /// Data buffer capacity
     int _bufferCapacity;
     /// Calibration file name
@@ -139,8 +163,16 @@ namespace janeth {
     std::shared_ptr<Calibration> _calibration;
     /// RPM of the device
     int _spinRate;
-    /// Acquisition thread
-    std::shared_ptr<AcquisitionThread<DataPacket> > _acqThread;
+    /// Acquisition thread for data packets
+    std::shared_ptr<AcquisitionThread<DataPacket> > _acqThreadDP;
+    /// Acquisition thread for position packets
+    std::shared_ptr<AcquisitionThread<PositionPacket> > _acqThreadPP;
+    /// How to publish data packets
+    std::string _dataPacketPublish;
+    /// Min distance for conversions
+    double _minDistance;
+    /// Max distance for conversions
+    double _maxDistance;
     /** @}
       */
 

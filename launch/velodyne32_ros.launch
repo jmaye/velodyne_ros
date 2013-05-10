@@ -1,13 +1,16 @@
 <launch>
   <node name="velodyne" pkg="velodyne_ros" type="velodyne_node" output="screen">
-    <param name="device_port" type="int" value="2368"/>
-    <param name="serial_device" type="str" value="/dev/ttyUSB0"/>
-    <param name="baud_rate" type="int" value="115200"/>
+    <param name="device_port_dp" type="int" value="2368"/>
+    <param name="device_port_pp" type="int" value="8308"/>
     <param name="retry_timeout" type="double" value="1"/>
     <param name="dp_min_freq" type="double" value="10"/>
     <param name="dp_max_freq" type="double" value="200"/>
+    <param name="pp_min_freq" type="double" value="0.1"/>
+    <param name="pp_max_freq" type="double" value="100"/>
     <param name="calibration_file" type="str" value="$(find velodyne_ros)/conf/calib-HDL-32E.dat"/>
-    <param name="spin_rate" type="int" value="300"/>
     <param name="device_name" type="str" value="Velodyne HDL-32E"/>
+    <param name="data_packet_publish" type="str" value="point_cloud"/>
+    <param name="min_distance" type="double" value="0.05"/>
+    <param name="max_distance" type="double" value="100"/>
   </node>
 </launch>

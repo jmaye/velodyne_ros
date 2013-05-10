@@ -25,6 +25,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <sensor_msgs/PointCloud.h>
+#include <sensor_msgs/Imu.h>
 
 #include <libvelodyne/sensor/DataPacket.h>
 #include <libvelodyne/sensor/PositionPacket.h>
@@ -38,6 +39,16 @@
 #include <libvelodyne/sensor/Calibration.h>
 #include <libvelodyne/sensor/Controller.h>
 #include <libvelodyne/data-structures/VdynePointCloud.h>
+#include <libvelodyne/data-structures/VdyneScanCloud.h>
+
+#include "velodyne_ros/TemperatureMsg.h"
+#include "velodyne_ros/ScanCloudMsg.h"
+#include "velodyne_ros/ScanMsg.h"
+#include "velodyne_ros/DataPacketMsg.h"
+#include "velodyne_ros/DataChunkMsg.h"
+#include "velodyne_ros/LaserDataMsg.h"
+
+#define GRAV_ACC 9.80665
 
 namespace janeth {
 
@@ -49,19 +60,26 @@ namespace janeth {
       _nodeHandle(nh) {
     _nodeHandle.param<std::string>("frame_id", _frameId,
       "vehicle_velodyne_link");
-    _nodeHandle.param<int>("device_port", _devicePort, 2368);
+    _nodeHandle.param<int>("device_port_dp", _devicePortDP, 2368);
+    _nodeHandle.param<int>("device_port_pp", _devicePortPP, 8308);
     _nodeHandle.param<std::string>("serial_device", _serialDeviceStr,
       "/dev/ttyUSB0");
     _nodeHandle.param<int>("baud_rate", _serialBaudrate, 115200);
     _nodeHandle.param<double>("retry_timeout", _retryTimeout, 1);
     _nodeHandle.param<double>("dp_min_freq", _dpMinFreq, 10);
     _nodeHandle.param<double>("dp_max_freq", _dpMaxFreq, 200);
+    _nodeHandle.param<double>("pp_min_freq", _ppMinFreq, 0.1);
+    _nodeHandle.param<double>("pp_max_freq", _ppMaxFreq, 100);
     _nodeHandle.param<int>("buffer_capacity", _bufferCapacity, 100000);
+    _nodeHandle.param<double>("min_distance", _minDistance, 0.9);
+    _nodeHandle.param<double>("max_distance", _maxDistance, 120);
     _nodeHandle.param<std::string>("calibration_file", _calibFileName,
       "conf/calib-HDL-64E.dat");
     _nodeHandle.param<int>("spin_rate", _spinRate, 300);
     _nodeHandle.param<std::string>("device_name", _deviceName,
       "Velodyne HDL-64E S2");
+    _nodeHandle.param<std::string>("data_packet_publish", _dataPacketPublish,
+      "point_cloud");
     if (_spinRate < (int)Controller::mMinRPM) {
       _spinRate = Controller::mMinRPM;
       ROS_WARN_STREAM("VelodyneNode::VelodyneNode(): the RPMs must lie in "
@@ -75,23 +93,50 @@ namespace janeth {
         << Controller::mMaxRPM << "]");
     }
     const int queueDepth = 100;
-    _pointCloudPublisher =
-      _nodeHandle.advertise<sensor_msgs::PointCloud>("point_cloud",
-       queueDepth);
+    if (_dataPacketPublish == "point_cloud")
+      _pointCloudPublisher =
+        _nodeHandle.advertise<sensor_msgs::PointCloud>(_dataPacketPublish,
+        queueDepth);
+    else if (_dataPacketPublish == "scan_cloud")
+      _scanCloudPublisher =
+        _nodeHandle.advertise<velodyne_ros::ScanCloudMsg>(_dataPacketPublish,
+        queueDepth);
+    else if (_dataPacketPublish == "data_packet")
+      _dataPacketPublisher =
+        _nodeHandle.advertise<velodyne_ros::DataPacketMsg>(_dataPacketPublish,
+        queueDepth);
+    if (_deviceName == "Velodyne HDL-32E") {
+      _imuPublisher = _nodeHandle.advertise<sensor_msgs::Imu>("imu",
+        queueDepth);
+      _tempPublisher = _nodeHandle.advertise<velodyne_ros::TemperatureMsg>(
+        "temperature", queueDepth);
+    }
     if (_deviceName == "Velodyne HDL-64E S2")
       ros::ServiceServer setRPMService = _nodeHandle.advertiseService(
         "set_rpm", &VelodyneNode::setRPM, this);
     _updater.setHardwareID(_deviceName);
-    _updater.add("UDP connection", this, &VelodyneNode::diagnoseUDPConnection);
+    _updater.add("UDP connection DP", this,
+      &VelodyneNode::diagnoseUDPConnectionDP);
+    if (_deviceName == "Velodyne HDL-32E")
+      _updater.add("UDP connection PP", this,
+        &VelodyneNode::diagnoseUDPConnectionPP);
     _updater.add("Data packet queue", this,
       &VelodyneNode::diagnoseDataPacketQueue);
+    if (_deviceName == "Velodyne HDL-32E")
+      _updater.add("Position packet queue", this,
+        &VelodyneNode::diagnosePositionPacketQueue);
     if (_deviceName == "Velodyne HDL-64E S2")
       _updater.add("Serial connection", this,
         &VelodyneNode::diagnoseSerialConnection);
     _dpFreq.reset(new diagnostic_updater::HeaderlessTopicDiagnostic(
-      "point_cloud", _updater,
+      _dataPacketPublish, _updater,
       diagnostic_updater::FrequencyStatusParam(&_dpMinFreq, &_dpMaxFreq,
       0.1, 10)));
+    if (_deviceName == "Velodyne HDL-32E")
+      _ppFreq.reset(new diagnostic_updater::HeaderlessTopicDiagnostic(
+        "imu", _updater,
+        diagnostic_updater::FrequencyStatusParam(&_ppMinFreq, &_ppMaxFreq,
+        0.1, 10)));
     _updater.force_update();
   }
 
@@ -104,31 +149,94 @@ namespace janeth {
 
   void VelodyneNode::publishDataPacket(const ros::Time& timestamp,
       const DataPacket& dp) {
-    VdynePointCloud pointCloud;
-    Converter::toPointCloud(dp, *_calibration, pointCloud);
-    sensor_msgs::PointCloudPtr rosCloud(new sensor_msgs::PointCloud);
-    rosCloud->header.stamp = ros::Time(dp.getTimestamp());
-    rosCloud->header.frame_id = _frameId;
-    const size_t numPoints = pointCloud.getSize();
-    rosCloud->points.reserve(numPoints);
-    rosCloud->channels.resize(1);
-    rosCloud->channels[0].name = "intensity";
-    rosCloud->channels[0].values.reserve(numPoints);
-    for (auto it = pointCloud.getPointBegin(); it != pointCloud.getPointEnd();
-        ++it) {
-      geometry_msgs::Point32 rosPoint;
-      rosPoint.x = it->mX;
-      rosPoint.y = it->mY;
-      rosPoint.z = it->mZ;
-      rosCloud->points.push_back(rosPoint);
-      rosCloud->channels[0].values.push_back(it->mIntensity);
+    if (_dataPacketPublish == "point_cloud") {
+      VdynePointCloud pointCloud;
+      Converter::toPointCloud(dp, *_calibration, pointCloud, _minDistance,
+        _maxDistance);
+      sensor_msgs::PointCloudPtr rosCloud(new sensor_msgs::PointCloud);
+      rosCloud->header.stamp = ros::Time(dp.getTimestamp());
+      rosCloud->header.frame_id = _frameId;
+      const size_t numPoints = pointCloud.getSize();
+      rosCloud->points.reserve(numPoints);
+      rosCloud->channels.resize(1);
+      rosCloud->channels[0].name = "intensity";
+      rosCloud->channels[0].values.reserve(numPoints);
+      for (auto it = pointCloud.getPointBegin(); it != pointCloud.getPointEnd();
+          ++it) {
+        geometry_msgs::Point32 rosPoint;
+        rosPoint.x = it->mX;
+        rosPoint.y = it->mY;
+        rosPoint.z = it->mZ;
+        rosCloud->points.push_back(rosPoint);
+        rosCloud->channels[0].values.push_back(it->mIntensity);
+      }
+      _pointCloudPublisher.publish(rosCloud);
     }
-    _pointCloudPublisher.publish(rosCloud);
+    else if (_dataPacketPublish == "scan_cloud") {
+      VdyneScanCloud scanCloud;
+      Converter::toScanCloud(dp, *_calibration, scanCloud, _minDistance,
+        _maxDistance);
+      velodyne_ros::ScanCloudMsgPtr scanCloudMsg(
+        new velodyne_ros::ScanCloudMsg);
+      scanCloudMsg->header.stamp = ros::Time(dp.getTimestamp());
+      scanCloudMsg->header.frame_id = _frameId;
+      const size_t numScans = scanCloud.getSize();
+      scanCloudMsg->Scans.reserve(numScans);
+      for (auto it = scanCloud.getScanBegin(); it != scanCloud.getScanEnd();
+          ++it) {
+        velodyne_ros::ScanMsg scan;
+        scan.Range = it->mRange;
+        scan.Heading = it->mHeading;
+        scan.Pitch = it->mPitch;
+        scan.Intensity = it->mIntensity;
+        scanCloudMsg->Scans.push_back(scan);
+      }
+      scanCloudMsg->StartAngle = scanCloud.getStartRotationAngle();
+      scanCloudMsg->EndAngle = scanCloud.getEndRotationAngle();
+      _scanCloudPublisher.publish(scanCloudMsg);
+    }
+    else if (_dataPacketPublish == "data_packet") {
+      velodyne_ros::DataPacketMsgPtr dataPacketMsg(
+        new velodyne_ros::DataPacketMsg);
+      dataPacketMsg->header.stamp = ros::Time(dp.getTimestamp());
+      dataPacketMsg->header.frame_id = _frameId;
+      for (size_t i = 0; i < DataPacket::mDataChunkNbr; ++i) {
+        const DataPacket::DataChunk& dataChunk = dp.getDataChunk(i);
+        dataPacketMsg->DataChunks[i].HeaderInfo = dataChunk.mHeaderInfo;
+        dataPacketMsg->DataChunks[i].RotationalInfo = dataChunk.mRotationalInfo;
+        for (size_t j = 0; j < DataPacket::DataChunk::mLasersPerPacket; ++j) {
+          dataPacketMsg->DataChunks[i].LaserData[j].Distance =
+            dataChunk.mLaserData[j].mDistance;
+          dataPacketMsg->DataChunks[i].LaserData[j].Intensity =
+            dataChunk.mLaserData[j].mIntensity;
+        }
+      }
+      _dataPacketPublisher.publish(dataPacketMsg);
+    }
     _dpFreq->tick();
   }
 
   void VelodyneNode::publishPositionPacket(const ros::Time& timestamp,
-      const PositionPacket& dp) {
+      const PositionPacket& pp) {
+    sensor_msgs::ImuPtr imuMsg(new sensor_msgs::Imu);
+    imuMsg->header.stamp = ros::Time(pp.getTimestamp());
+    imuMsg->header.frame_id = _frameId;
+    velodyne_ros::TemperatureMsgPtr tempMsg(new velodyne_ros::TemperatureMsg);
+    tempMsg->header.stamp = ros::Time(pp.getTimestamp());
+    tempMsg->header.frame_id = _frameId;
+    imuMsg->angular_velocity.x = -pp.getGyro2() * M_PI / 180.0;
+    imuMsg->angular_velocity.y = pp.getGyro1() * M_PI / 180.0;
+    imuMsg->angular_velocity.z = pp.getGyro3() * M_PI / 180.0;
+    imuMsg->linear_acceleration.x = (-pp.getAccel1Y() + pp.getAccel3X()) *
+      GRAV_ACC / 2.0;
+    imuMsg->linear_acceleration.y = -(pp.getAccel2Y() + pp.getAccel3Y()) *
+      GRAV_ACC / 2.0;
+    imuMsg->linear_acceleration.z = (pp.getAccel1X() + pp.getAccel2X()) *
+      GRAV_ACC / 2.0;
+    tempMsg->Temperature = (pp.getTemp1() + pp.getTemp2() + pp.getTemp3())
+      / 3.0;
+    _tempPublisher.publish(tempMsg);
+    _imuPublisher.publish(imuMsg);
   }
 
   bool VelodyneNode::setRPM(velodyne_ros::SetRPM::Request& request,
@@ -158,12 +266,23 @@ namespace janeth {
     }
   }
 
-  void VelodyneNode::diagnoseUDPConnection(
+  void VelodyneNode::diagnoseUDPConnectionDP(
       diagnostic_updater::DiagnosticStatusWrapper& status) {
-    if (_udpConnection != nullptr && _udpConnection->isOpen())
+    if (_udpConnectionDP != nullptr && _udpConnectionDP->isOpen())
       status.summaryf(diagnostic_msgs::DiagnosticStatus::OK,
         "UDP connection opened on %d.",
-        _udpConnection->getPort());
+        _udpConnectionDP->getPort());
+    else
+     status.summaryf(diagnostic_msgs::DiagnosticStatus::ERROR,
+      "UDP connection closed.");
+  }
+
+  void VelodyneNode::diagnoseUDPConnectionPP(
+      diagnostic_updater::DiagnosticStatusWrapper& status) {
+    if (_udpConnectionPP != nullptr && _udpConnectionPP->isOpen())
+      status.summaryf(diagnostic_msgs::DiagnosticStatus::OK,
+        "UDP connection opened on %d.",
+        _udpConnectionPP->getPort());
     else
      status.summaryf(diagnostic_msgs::DiagnosticStatus::ERROR,
       "UDP connection closed.");
@@ -182,10 +301,24 @@ namespace janeth {
 
   void VelodyneNode::diagnoseDataPacketQueue(
       diagnostic_updater::DiagnosticStatusWrapper& status) {
-    if (_acqThread != nullptr) {
-      status.add("Size", _acqThread->getBuffer().getSize());
+    if (_acqThreadDP != nullptr) {
+      status.add("Size", _acqThreadDP->getBuffer().getSize());
       status.add("Dropped elements",
-        _acqThread->getBuffer().getNumDroppedElements());
+        _acqThreadDP->getBuffer().getNumDroppedElements());
+      status.summary(diagnostic_msgs::DiagnosticStatus::OK,
+        "Acquisition thread running");
+    }
+    else
+      status.summary(diagnostic_msgs::DiagnosticStatus::ERROR,
+        "Acquisition thread not running");
+  }
+
+  void VelodyneNode::diagnosePositionPacketQueue(
+      diagnostic_updater::DiagnosticStatusWrapper& status) {
+    if (_acqThreadPP != nullptr) {
+      status.add("Size", _acqThreadPP->getBuffer().getSize());
+      status.add("Dropped elements",
+        _acqThreadPP->getBuffer().getNumDroppedElements());
       status.summary(diagnostic_msgs::DiagnosticStatus::OK,
         "Acquisition thread running");
     }
@@ -198,23 +331,37 @@ namespace janeth {
     std::ifstream calibFile(_calibFileName);
     _calibration.reset(new Calibration());
     calibFile >> *_calibration;
-    _udpConnection.reset(new UDPConnectionServer(_devicePort));
+    _udpConnectionDP.reset(new UDPConnectionServer(_devicePortDP));
     _serialConnection.reset(new SerialConnection(_serialDeviceStr,
       _serialBaudrate));
     if (_serialConnection != nullptr && _serialConnection->isOpen()) {
       Controller controller(*_serialConnection);
       controller.setRPM(_spinRate);
     }
-    _acqThread.reset(new AcquisitionThread<DataPacket>(*_udpConnection));
-    _acqThread->getBuffer().setCapacity(_bufferCapacity);
-    _acqThread->start();
+    _acqThreadDP.reset(new AcquisitionThread<DataPacket>(*_udpConnectionDP));
+    _acqThreadDP->getBuffer().setCapacity(_bufferCapacity);
+    _acqThreadDP->start();
+    if (_deviceName == "Velodyne HDL-32E") {
+      _udpConnectionPP.reset(new UDPConnectionServer(_devicePortPP));
+      _acqThreadPP.reset(new AcquisitionThread<PositionPacket>(
+        *_udpConnectionPP));
+      _acqThreadPP->getBuffer().setCapacity(_bufferCapacity);
+      _acqThreadPP->start();
+    }
     Timer timer;
     while (_nodeHandle.ok()) {
       try {
-        if (!_acqThread->getBuffer().isEmpty()) {
-          std::shared_ptr<DataPacket> dp(_acqThread->getBuffer().dequeue());
+        if (!_acqThreadDP->getBuffer().isEmpty()) {
+          std::shared_ptr<DataPacket> dp(_acqThreadDP->getBuffer().dequeue());
           const ros::Time timestamp = ros::Time::now();
           publishDataPacket(timestamp, *dp);
+        }
+        if (_deviceName == "Velodyne HDL-32E" &&
+            !_acqThreadPP->getBuffer().isEmpty()) {
+          std::shared_ptr<PositionPacket> pp(
+            _acqThreadPP->getBuffer().dequeue());
+          const ros::Time timestamp = ros::Time::now();
+          publishPositionPacket(timestamp, *pp);
         }
       }
       catch (const IOException& e) {
