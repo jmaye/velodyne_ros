@@ -1,0 +1,20 @@
+connection:
+  retry_timeout: 1.0
+udp_connection:
+  device_port_dp: 2368
+serial_connection:
+  serial_device: "/dev/ttyUSB0"
+  baud_rate: 115200
+sensor:
+  buffer_capacity: 100000
+  min_distance: 0.9
+  max_distance: 120.0
+  device_name: "Velodyne HDL-64E S2"
+  spin_rate: 300
+  data_packet_publish: "data_packet"
+diagnostics:
+  dp_min_freq: 10.0
+  dp_max_freq: 200.0
+ros:
+  queue_depth: 100
+  frame_id: "vehicle_velodyne_link"

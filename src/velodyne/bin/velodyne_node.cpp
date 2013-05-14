@@ -22,13 +22,13 @@
 
 #include <ros/ros.h>
 
-#include "janeth/VelodyneNode.h"
+#include "VelodyneNode.h"
 
 int main(int argc, char** argv) {
   ros::init(argc, argv, "velodyne");
   ros::NodeHandle nh("~");
   try {
-    janeth::VelodyneNode vn(nh);
+    velodyne::VelodyneNode vn(nh);
     vn.spin();
   }
   catch (const std::exception& e) {

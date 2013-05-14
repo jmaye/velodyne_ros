@@ -1,6 +1,1 @@
-bin
 build
-lib
-msg_gen
-srv_gen
-src/velodyne_ros

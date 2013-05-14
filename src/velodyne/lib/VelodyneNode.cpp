@@ -16,7 +16,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.       *
  ******************************************************************************/
 
-#include "janeth/VelodyneNode.h"
+#include "VelodyneNode.h"
 
 #include <fstream>
 
@@ -41,16 +41,16 @@
 #include <libvelodyne/data-structures/VdynePointCloud.h>
 #include <libvelodyne/data-structures/VdyneScanCloud.h>
 
-#include "velodyne_ros/TemperatureMsg.h"
-#include "velodyne_ros/ScanCloudMsg.h"
-#include "velodyne_ros/ScanMsg.h"
-#include "velodyne_ros/DataPacketMsg.h"
-#include "velodyne_ros/DataChunkMsg.h"
-#include "velodyne_ros/LaserDataMsg.h"
+#include "velodyne/TemperatureMsg.h"
+#include "velodyne/ScanCloudMsg.h"
+#include "velodyne/ScanMsg.h"
+#include "velodyne/DataPacketMsg.h"
+#include "velodyne/DataChunkMsg.h"
+#include "velodyne/LaserDataMsg.h"
 
 #define GRAV_ACC 9.80665
 
-namespace janeth {
+namespace velodyne {
 
 /******************************************************************************/
 /* Constructors and Destructor                                                */
@@ -58,28 +58,7 @@ namespace janeth {
 
   VelodyneNode::VelodyneNode(const ros::NodeHandle& nh) :
       _nodeHandle(nh) {
-    _nodeHandle.param<std::string>("frame_id", _frameId,
-      "vehicle_velodyne_link");
-    _nodeHandle.param<int>("device_port_dp", _devicePortDP, 2368);
-    _nodeHandle.param<int>("device_port_pp", _devicePortPP, 8308);
-    _nodeHandle.param<std::string>("serial_device", _serialDeviceStr,
-      "/dev/ttyUSB0");
-    _nodeHandle.param<int>("baud_rate", _serialBaudrate, 115200);
-    _nodeHandle.param<double>("retry_timeout", _retryTimeout, 1);
-    _nodeHandle.param<double>("dp_min_freq", _dpMinFreq, 10);
-    _nodeHandle.param<double>("dp_max_freq", _dpMaxFreq, 200);
-    _nodeHandle.param<double>("pp_min_freq", _ppMinFreq, 0.1);
-    _nodeHandle.param<double>("pp_max_freq", _ppMaxFreq, 100);
-    _nodeHandle.param<int>("buffer_capacity", _bufferCapacity, 100000);
-    _nodeHandle.param<double>("min_distance", _minDistance, 0.9);
-    _nodeHandle.param<double>("max_distance", _maxDistance, 120);
-    _nodeHandle.param<std::string>("calibration_file", _calibFileName,
-      "conf/calib-HDL-64E.dat");
-    _nodeHandle.param<int>("spin_rate", _spinRate, 300);
-    _nodeHandle.param<std::string>("device_name", _deviceName,
-      "Velodyne HDL-64E S2");
-    _nodeHandle.param<std::string>("data_packet_publish", _dataPacketPublish,
-      "point_cloud");
+    getParameters();
     if (_spinRate < (int)Controller::mMinRPM) {
       _spinRate = Controller::mMinRPM;
       ROS_WARN_STREAM("VelodyneNode::VelodyneNode(): the RPMs must lie in "
@@ -92,28 +71,27 @@ namespace janeth {
         "the range [" << Controller::mMinRPM << ", "
         << Controller::mMaxRPM << "]");
     }
-    const int queueDepth = 100;
     if (_dataPacketPublish == "point_cloud")
       _pointCloudPublisher =
         _nodeHandle.advertise<sensor_msgs::PointCloud>(_dataPacketPublish,
-        queueDepth);
+        _queueDepth);
     else if (_dataPacketPublish == "scan_cloud")
       _scanCloudPublisher =
-        _nodeHandle.advertise<velodyne_ros::ScanCloudMsg>(_dataPacketPublish,
-        queueDepth);
+        _nodeHandle.advertise<velodyne::ScanCloudMsg>(_dataPacketPublish,
+        _queueDepth);
     else if (_dataPacketPublish == "data_packet")
       _dataPacketPublisher =
-        _nodeHandle.advertise<velodyne_ros::DataPacketMsg>(_dataPacketPublish,
-        queueDepth);
+        _nodeHandle.advertise<velodyne::DataPacketMsg>(_dataPacketPublish,
+        _queueDepth);
     if (_deviceName == "Velodyne HDL-32E") {
       _imuPublisher = _nodeHandle.advertise<sensor_msgs::Imu>("imu",
-        queueDepth);
-      _tempPublisher = _nodeHandle.advertise<velodyne_ros::TemperatureMsg>(
-        "temperature", queueDepth);
+        _queueDepth);
+      _tempPublisher = _nodeHandle.advertise<velodyne::TemperatureMsg>(
+        "temperature", _queueDepth);
     }
-    if (_deviceName == "Velodyne HDL-64E S2")
-      ros::ServiceServer setRPMService = _nodeHandle.advertiseService(
-        "set_rpm", &VelodyneNode::setRPM, this);
+//    if (_deviceName == "Velodyne HDL-64E S2")
+//      ros::ServiceServer setRPMService = _nodeHandle.advertiseService(
+//        "set_rpm", &VelodyneNode::setRPM, this);
     _updater.setHardwareID(_deviceName);
     _updater.add("UDP connection DP", this,
       &VelodyneNode::diagnoseUDPConnectionDP);
@@ -176,15 +154,15 @@ namespace janeth {
       VdyneScanCloud scanCloud;
       Converter::toScanCloud(dp, *_calibration, scanCloud, _minDistance,
         _maxDistance);
-      velodyne_ros::ScanCloudMsgPtr scanCloudMsg(
-        new velodyne_ros::ScanCloudMsg);
+      velodyne::ScanCloudMsgPtr scanCloudMsg(
+        new velodyne::ScanCloudMsg);
       scanCloudMsg->header.stamp = ros::Time(dp.getTimestamp());
       scanCloudMsg->header.frame_id = _frameId;
       const size_t numScans = scanCloud.getSize();
       scanCloudMsg->Scans.reserve(numScans);
       for (auto it = scanCloud.getScanBegin(); it != scanCloud.getScanEnd();
           ++it) {
-        velodyne_ros::ScanMsg scan;
+        velodyne::ScanMsg scan;
         scan.Range = it->mRange;
         scan.Heading = it->mHeading;
         scan.Pitch = it->mPitch;
@@ -196,8 +174,8 @@ namespace janeth {
       _scanCloudPublisher.publish(scanCloudMsg);
     }
     else if (_dataPacketPublish == "data_packet") {
-      velodyne_ros::DataPacketMsgPtr dataPacketMsg(
-        new velodyne_ros::DataPacketMsg);
+      velodyne::DataPacketMsgPtr dataPacketMsg(
+        new velodyne::DataPacketMsg);
       dataPacketMsg->header.stamp = ros::Time(dp.getTimestamp());
       dataPacketMsg->header.frame_id = _frameId;
       for (size_t i = 0; i < DataPacket::mDataChunkNbr; ++i) {
@@ -221,7 +199,7 @@ namespace janeth {
     sensor_msgs::ImuPtr imuMsg(new sensor_msgs::Imu);
     imuMsg->header.stamp = ros::Time(pp.getTimestamp());
     imuMsg->header.frame_id = _frameId;
-    velodyne_ros::TemperatureMsgPtr tempMsg(new velodyne_ros::TemperatureMsg);
+    velodyne::TemperatureMsgPtr tempMsg(new velodyne::TemperatureMsg);
     tempMsg->header.stamp = ros::Time(pp.getTimestamp());
     tempMsg->header.frame_id = _frameId;
     imuMsg->angular_velocity.x = -pp.getGyro2() * M_PI / 180.0;
@@ -239,32 +217,32 @@ namespace janeth {
     _imuPublisher.publish(imuMsg);
   }
 
-  bool VelodyneNode::setRPM(velodyne_ros::SetRPM::Request& request,
-      velodyne_ros::SetRPM::Response& response) {
-    _spinRate = request.SpinRate;
-    if (_spinRate < (int)Controller::mMinRPM) {
-      _spinRate = Controller::mMinRPM;
-      ROS_WARN_STREAM("VelodyneNode::VelodyneNode(): the RPMs must lie in "
-        "the range [" << Controller::mMinRPM << ", "
-        << Controller::mMaxRPM << "]");
-    }
-    else if (_spinRate > (int)Controller::mMaxRPM) {
-      _spinRate = Controller::mMaxRPM;
-      ROS_WARN_STREAM("VelodyneNode::VelodyneNode(): the RPMs must lie in "
-        "the range [" << Controller::mMinRPM << ", "
-        << Controller::mMaxRPM << "]");
-    }
-    if (_serialConnection != nullptr && _serialConnection->isOpen()) {
-      Controller controller(*_serialConnection);
-      controller.setRPM(_spinRate);
-      response.Response = true;
-      return true;
-    }
-    else {
-      response.Response = false;
-      return false;
-    }
-  }
+//  bool VelodyneNode::setRPM(velodyne::SetRPM::Request& request,
+//      velodyne::SetRPM::Response& response) {
+//    _spinRate = request.SpinRate;
+//    if (_spinRate < (int)Controller::mMinRPM) {
+//      _spinRate = Controller::mMinRPM;
+//      ROS_WARN_STREAM("VelodyneNode::VelodyneNode(): the RPMs must lie in "
+//        "the range [" << Controller::mMinRPM << ", "
+//        << Controller::mMaxRPM << "]");
+//    }
+//    else if (_spinRate > (int)Controller::mMaxRPM) {
+//      _spinRate = Controller::mMaxRPM;
+//      ROS_WARN_STREAM("VelodyneNode::VelodyneNode(): the RPMs must lie in "
+//        "the range [" << Controller::mMinRPM << ", "
+//        << Controller::mMaxRPM << "]");
+//    }
+//    if (_serialConnection != nullptr && _serialConnection->isOpen()) {
+//      Controller controller(*_serialConnection);
+//      controller.setRPM(_spinRate);
+//      response.Response = true;
+//      return true;
+//    }
+//    else {
+//      response.Response = false;
+//      return false;
+//    }
+//  }
 
   void VelodyneNode::diagnoseUDPConnectionDP(
       diagnostic_updater::DiagnosticStatusWrapper& status) {
@@ -382,6 +360,45 @@ namespace janeth {
       _updater.update();
       ros::spinOnce();
     }
+  }
+
+  void VelodyneNode::getParameters() {
+    _nodeHandle.param<std::string>("ros/frame_id", _frameId,
+      "vehicle_velodyne_link");
+    _nodeHandle.param<int>("ros/queue_depth", _queueDepth, 100);
+    _nodeHandle.param<int>("udp_connection/device_port_dp", _devicePortDP,
+      2368);
+    _nodeHandle.param<int>("udp_connection/device_port_pp", _devicePortPP,
+      8308);
+    _nodeHandle.param<std::string>("serial_connection/serial_device",
+      _serialDeviceStr, "/dev/ttyUSB0");
+    _nodeHandle.param<int>("serial_connection/baud_rate", _serialBaudrate,
+      115200);
+    _nodeHandle.param<double>("connection/retry_timeout", _retryTimeout, 1);
+    _nodeHandle.param<double>("diagnostics/dp_min_freq", _dpMinFreq, 10);
+    _nodeHandle.param<double>("diagnostics/dp_max_freq", _dpMaxFreq, 200);
+    _nodeHandle.param<double>("diagnostics/pp_min_freq", _ppMinFreq, 0.1);
+    _nodeHandle.param<double>("diagnostics/pp_max_freq", _ppMaxFreq, 100);
+    _nodeHandle.param<int>("sensor/buffer_capacity", _bufferCapacity, 100000);
+    _nodeHandle.param<double>("sensor/min_distance", _minDistance, 0.9);
+    _nodeHandle.param<double>("sensor/max_distance", _maxDistance, 120);
+    _nodeHandle.param<std::string>("sensor/device_name", _deviceName,
+      "Velodyne HDL-64E S2");
+    if (_deviceName == "Velodyne HDL-64E S2")
+      _nodeHandle.param<std::string>("sensor/calibration_file", _calibFileName,
+        "conf/calib-HDL-64E.dat");
+    else if (_deviceName == "Velodyne HDL-32E")
+      _nodeHandle.param<std::string>("sensor/calibration_file", _calibFileName,
+        "conf/calib-HDL-32E.dat");
+    else
+      ROS_ERROR_STREAM("Unknown device: " << _deviceName);
+    _nodeHandle.param<int>("sensor/spin_rate", _spinRate, 300);
+    _nodeHandle.param<std::string>("sensor/data_packet_publish",
+      _dataPacketPublish, "point_cloud");
+    if (_dataPacketPublish != "point_cloud" ||
+       _dataPacketPublish != "scan_cloud" ||
+       _dataPacketPublish != "data_packet")
+      ROS_ERROR_STREAM("Unknown publisher: " << _dataPacketPublish);
   }
 
 }

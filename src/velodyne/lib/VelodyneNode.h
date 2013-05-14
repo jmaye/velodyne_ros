@@ -30,7 +30,7 @@
 #include <ros/ros.h>
 #include <diagnostic_updater/diagnostic_updater.h>
 
-#include "velodyne_ros/SetRPM.h"
+//#include "velodyne_ros/SetRPM.h"
 
 class UDPConnectionServer;
 class SerialConnection;
@@ -43,7 +43,7 @@ namespace diagnostic_updater {
   class HeaderlessTopicDiagnostic;
 }
 
-namespace janeth {
+namespace velodyne {
 
   /** The class VelodyneNode implements the Velodyne node.
       \brief Velodyne node
@@ -86,8 +86,8 @@ namespace janeth {
     void publishPositionPacket(const ros::Time& timestamp, const PositionPacket&
       pp);
     /// Set RPM service
-    bool setRPM(velodyne_ros::SetRPM::Request& request,
-      velodyne_ros::SetRPM::Response& response);
+//    bool setRPM(velodyne_ros::SetRPM::Request& request,
+//      velodyne_ros::SetRPM::Response& response);
     /// Diagnose the UDP connection for data packets
     void diagnoseUDPConnectionDP(diagnostic_updater::DiagnosticStatusWrapper&
       status);
@@ -103,6 +103,8 @@ namespace janeth {
     /// Diagnose the position packet queue
     void diagnosePositionPacketQueue(
       diagnostic_updater::DiagnosticStatusWrapper& status);
+    /// Retrieves parameters
+    void getParameters();
     /** @}
       */
 
@@ -173,6 +175,8 @@ namespace janeth {
     double _minDistance;
     /// Max distance for conversions
     double _maxDistance;
+    /// Queue depth
+    int _queueDepth;
     /** @}
       */
 
