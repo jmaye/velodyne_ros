@@ -395,8 +395,8 @@ namespace velodyne {
     _nodeHandle.param<int>("sensor/spin_rate", _spinRate, 300);
     _nodeHandle.param<std::string>("sensor/data_packet_publish",
       _dataPacketPublish, "point_cloud");
-    if (_dataPacketPublish != "point_cloud" ||
-       _dataPacketPublish != "scan_cloud" ||
+    if (_dataPacketPublish != "point_cloud" &&
+       _dataPacketPublish != "scan_cloud" &&
        _dataPacketPublish != "data_packet")
       ROS_ERROR_STREAM("Unknown publisher: " << _dataPacketPublish);
   }
