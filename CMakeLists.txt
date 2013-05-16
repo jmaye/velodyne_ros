@@ -4,7 +4,7 @@ include(ReMake)
 
 remake_project(
   velodyne-ros
-  VERSION 0.1
+  VERSION 1:0.1
   RELEASE alpha
   SUMMARY "ROS driver for Velodyne HDL devices."
   AUTHOR "Jerome Maye"

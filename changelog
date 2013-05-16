@@ -1,3 +1,9 @@
+velodyne-ros (1:0.1-25) precise; urgency=low
+
+  * adding epoch to the version, not to be confused by ros version
+
+ -- Jerome Maye <jerome.maye@mavt.ethz.ch>  Thu, 16 May 2013 19:54:50 +0000
+
 velodyne-ros (0.1-24) precise; urgency=low
 
   * corrected calibration for 32 HDL 
