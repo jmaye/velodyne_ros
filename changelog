@@ -1,3 +1,9 @@
+velodyne-ros (1:0.1-26) precise; urgency=low
+
+  * adding service to set the RPM of the Velodyne
+
+ -- Jerome Maye <jerome.maye@mavt.ethz.ch>  Fri, 17 May 2013 08:26:31 +0000
+
 velodyne-ros (1:0.1-25) precise; urgency=low
 
   * adding epoch to the version, not to be confused by ros version

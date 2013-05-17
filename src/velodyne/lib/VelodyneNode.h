@@ -30,7 +30,7 @@
 #include <ros/ros.h>
 #include <diagnostic_updater/diagnostic_updater.h>
 
-//#include "velodyne_ros/SetRPM.h"
+#include "velodyne/SetRPM.h"
 
 class UDPConnectionServer;
 class SerialConnection;
@@ -86,8 +86,8 @@ namespace velodyne {
     void publishPositionPacket(const ros::Time& timestamp, const PositionPacket&
       pp);
     /// Set RPM service
-//    bool setRPM(velodyne_ros::SetRPM::Request& request,
-//      velodyne_ros::SetRPM::Response& response);
+    bool setRPM(velodyne::SetRPM::Request& request,
+      velodyne::SetRPM::Response& response);
     /// Diagnose the UDP connection for data packets
     void diagnoseUDPConnectionDP(diagnostic_updater::DiagnosticStatusWrapper&
       status);

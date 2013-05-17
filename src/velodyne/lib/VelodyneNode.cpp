@@ -89,9 +89,9 @@ namespace velodyne {
       _tempPublisher = _nodeHandle.advertise<velodyne::TemperatureMsg>(
         "temperature", _queueDepth);
     }
-//    if (_deviceName == "Velodyne HDL-64E S2")
-//      ros::ServiceServer setRPMService = _nodeHandle.advertiseService(
-//        "set_rpm", &VelodyneNode::setRPM, this);
+    if (_deviceName == "Velodyne HDL-64E S2")
+      ros::ServiceServer setRPMService = _nodeHandle.advertiseService(
+        "set_rpm", &VelodyneNode::setRPM, this);
     _updater.setHardwareID(_deviceName);
     _updater.add("UDP connection DP", this,
       &VelodyneNode::diagnoseUDPConnectionDP);
@@ -217,32 +217,32 @@ namespace velodyne {
     _imuPublisher.publish(imuMsg);
   }
 
-//  bool VelodyneNode::setRPM(velodyne::SetRPM::Request& request,
-//      velodyne::SetRPM::Response& response) {
-//    _spinRate = request.SpinRate;
-//    if (_spinRate < (int)Controller::mMinRPM) {
-//      _spinRate = Controller::mMinRPM;
-//      ROS_WARN_STREAM("VelodyneNode::VelodyneNode(): the RPMs must lie in "
-//        "the range [" << Controller::mMinRPM << ", "
-//        << Controller::mMaxRPM << "]");
-//    }
-//    else if (_spinRate > (int)Controller::mMaxRPM) {
-//      _spinRate = Controller::mMaxRPM;
-//      ROS_WARN_STREAM("VelodyneNode::VelodyneNode(): the RPMs must lie in "
-//        "the range [" << Controller::mMinRPM << ", "
-//        << Controller::mMaxRPM << "]");
-//    }
-//    if (_serialConnection != nullptr && _serialConnection->isOpen()) {
-//      Controller controller(*_serialConnection);
-//      controller.setRPM(_spinRate);
-//      response.Response = true;
-//      return true;
-//    }
-//    else {
-//      response.Response = false;
-//      return false;
-//    }
-//  }
+  bool VelodyneNode::setRPM(velodyne::SetRPM::Request& request,
+      velodyne::SetRPM::Response& response) {
+    _spinRate = request.SpinRate;
+    if (_spinRate < (int)Controller::mMinRPM) {
+      _spinRate = Controller::mMinRPM;
+      ROS_WARN_STREAM("VelodyneNode::VelodyneNode(): the RPMs must lie in "
+        "the range [" << Controller::mMinRPM << ", "
+        << Controller::mMaxRPM << "]");
+    }
+    else if (_spinRate > (int)Controller::mMaxRPM) {
+      _spinRate = Controller::mMaxRPM;
+      ROS_WARN_STREAM("VelodyneNode::VelodyneNode(): the RPMs must lie in "
+        "the range [" << Controller::mMinRPM << ", "
+        << Controller::mMaxRPM << "]");
+    }
+    if (_serialConnection != nullptr && _serialConnection->isOpen()) {
+      Controller controller(*_serialConnection);
+      controller.setRPM(_spinRate);
+      response.Response = true;
+      return true;
+    }
+    else {
+      response.Response = false;
+      return false;
+    }
+  }
 
   void VelodyneNode::diagnoseUDPConnectionDP(
       diagnostic_updater::DiagnosticStatusWrapper& status) {
