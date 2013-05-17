@@ -123,6 +123,8 @@ namespace velodyne {
     ros::Publisher _imuPublisher;
     /// Temperature publisher
     ros::Publisher _tempPublisher;
+    /// RPM service
+    ros::ServiceServer _setRPMService;
     /// Frame ID
     std::string _frameId;
     /// Device name

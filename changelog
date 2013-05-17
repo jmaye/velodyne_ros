@@ -1,3 +1,9 @@
+velodyne-ros (1:0.1-27) precise; urgency=low
+
+  * correction for scope of service 
+
+ -- Jerome Maye <jerome.maye@mavt.ethz.ch>  Fri, 17 May 2013 08:44:50 +0000
+
 velodyne-ros (1:0.1-26) precise; urgency=low
 
   * adding service to set the RPM of the Velodyne

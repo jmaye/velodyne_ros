@@ -90,8 +90,8 @@ namespace velodyne {
         "temperature", _queueDepth);
     }
     if (_deviceName == "Velodyne HDL-64E S2")
-      ros::ServiceServer setRPMService = _nodeHandle.advertiseService(
-        "set_rpm", &VelodyneNode::setRPM, this);
+      _setRPMService = _nodeHandle.advertiseService("set_rpm",
+        &VelodyneNode::setRPM, this);
     _updater.setHardwareID(_deviceName);
     _updater.add("UDP connection DP", this,
       &VelodyneNode::diagnoseUDPConnectionDP);
