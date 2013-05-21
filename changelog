@@ -1,3 +1,9 @@
+velodyne-ros (1:0.1-30) precise; urgency=low
+
+  * changing udev 
+
+ -- Jerome Maye <jerome.maye@mavt.ethz.ch>  Tue, 21 May 2013 20:25:39 +0000
+
 velodyne-ros (1:0.1-29) precise; urgency=low
 
   * changing serial port name 
