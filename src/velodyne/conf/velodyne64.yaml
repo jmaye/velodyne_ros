@@ -3,7 +3,7 @@ connection:
 udp_connection:
   device_port_dp: 2368
 serial_connection:
-  serial_device: "/dev/ttyUSB0"
+  serial_device: "/dev/velodyne_serial"
   baud_rate: 115200
 sensor:
   buffer_capacity: 100000

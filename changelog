@@ -1,3 +1,9 @@
+velodyne-ros (1:0.1-29) precise; urgency=low
+
+  * changing serial port name 
+
+ -- Jerome Maye <jerome.maye@mavt.ethz.ch>  Tue, 21 May 2013 10:45:16 +0000
+
 velodyne-ros (1:0.1-28) precise; urgency=low
 
   * fixing dependency on sensor_msgs 

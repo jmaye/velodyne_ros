@@ -371,7 +371,7 @@ namespace velodyne {
     _nodeHandle.param<int>("udp_connection/device_port_pp", _devicePortPP,
       8308);
     _nodeHandle.param<std::string>("serial_connection/serial_device",
-      _serialDeviceStr, "/dev/ttyUSB0");
+      _serialDeviceStr, "/dev/velodyne_serial");
     _nodeHandle.param<int>("serial_connection/baud_rate", _serialBaudrate,
       115200);
     _nodeHandle.param<double>("connection/retry_timeout", _retryTimeout, 1);
