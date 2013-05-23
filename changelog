@@ -1,3 +1,9 @@
+velodyne-ros (1:0.1-31) precise; urgency=low
+
+  * making thread end safely 
+
+ -- Jerome Maye <jerome.maye@mavt.ethz.ch>  Thu, 23 May 2013 18:17:15 +0000
+
 velodyne-ros (1:0.1-30) precise; urgency=low
 
   * changing udev 

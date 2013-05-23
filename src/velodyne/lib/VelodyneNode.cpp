@@ -119,6 +119,10 @@ namespace velodyne {
   }
 
   VelodyneNode::~VelodyneNode() {
+    if (_acqThreadPP != nullptr)
+      _acqThreadPP->interrupt();
+    if (_acqThreadDP != nullptr)
+      _acqThreadDP->interrupt();
   }
 
 /******************************************************************************/
