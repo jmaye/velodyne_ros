@@ -57,7 +57,12 @@ namespace velodyne {
 /******************************************************************************/
 
   VelodyneNode::VelodyneNode(const ros::NodeHandle& nh) :
-      _nodeHandle(nh) {
+      _nodeHandle(nh),
+      _dataPacketCounter(0),
+      _positionPacketCounter(0),
+      _revolutionPacketCounter(0),
+      _lastStartAngle(0),
+      _currentPointsPerRevolution(0) {
     getParameters();
     if (_spinRate < (int)Controller::mMinRPM) {
       _spinRate = Controller::mMinRPM;
@@ -138,6 +143,7 @@ namespace velodyne {
       sensor_msgs::PointCloudPtr rosCloud(new sensor_msgs::PointCloud);
       rosCloud->header.stamp = ros::Time(dp.getTimestamp());
       rosCloud->header.frame_id = _frameId;
+      rosCloud->header.seq = _dataPacketCounter++;
       const size_t numPoints = pointCloud.getSize();
       rosCloud->points.reserve(numPoints);
       rosCloud->channels.resize(1);
@@ -162,6 +168,7 @@ namespace velodyne {
         new velodyne::ScanCloudMsg);
       scanCloudMsg->header.stamp = ros::Time(dp.getTimestamp());
       scanCloudMsg->header.frame_id = _frameId;
+      scanCloudMsg->header.seq = _dataPacketCounter++;
       const size_t numScans = scanCloud.getSize();
       scanCloudMsg->Scans.reserve(numScans);
       for (auto it = scanCloud.getScanBegin(); it != scanCloud.getScanEnd();
@@ -182,6 +189,7 @@ namespace velodyne {
         new velodyne::DataPacketMsg);
       dataPacketMsg->header.stamp = ros::Time(dp.getTimestamp());
       dataPacketMsg->header.frame_id = _frameId;
+      dataPacketMsg->header.seq = _dataPacketCounter++;
       for (size_t i = 0; i < DataPacket::mDataChunkNbr; ++i) {
         const DataPacket::DataChunk& dataChunk = dp.getDataChunk(i);
         dataPacketMsg->DataChunks[i].HeaderInfo = dataChunk.mHeaderInfo;
@@ -203,9 +211,11 @@ namespace velodyne {
     sensor_msgs::ImuPtr imuMsg(new sensor_msgs::Imu);
     imuMsg->header.stamp = ros::Time(pp.getTimestamp());
     imuMsg->header.frame_id = _frameId;
+    imuMsg->header.seq = _positionPacketCounter;
     velodyne::TemperatureMsgPtr tempMsg(new velodyne::TemperatureMsg);
     tempMsg->header.stamp = ros::Time(pp.getTimestamp());
     tempMsg->header.frame_id = _frameId;
+    tempMsg->header.seq = _positionPacketCounter++;
     imuMsg->angular_velocity.x = -pp.getGyro2() * M_PI / 180.0;
     imuMsg->angular_velocity.y = pp.getGyro1() * M_PI / 180.0;
     imuMsg->angular_velocity.z = pp.getGyro3() * M_PI / 180.0;
@@ -250,13 +260,16 @@ namespace velodyne {
 
   void VelodyneNode::diagnoseUDPConnectionDP(
       diagnostic_updater::DiagnosticStatusWrapper& status) {
-    if (_udpConnectionDP != nullptr && _udpConnectionDP->isOpen())
+    if (_udpConnectionDP != nullptr && _udpConnectionDP->isOpen()) {
+      status.add("Current points per revolution", _currentPointsPerRevolution);
+      status.add("Target points per revolution", _targetPointsPerRevolution);
       status.summaryf(diagnostic_msgs::DiagnosticStatus::OK,
         "UDP connection opened on %d.",
         _udpConnectionDP->getPort());
+    }
     else
      status.summaryf(diagnostic_msgs::DiagnosticStatus::ERROR,
-      "UDP connection closed.");
+      "UDP connection closed on %d.", _devicePortDP);
   }
 
   void VelodyneNode::diagnoseUDPConnectionPP(
@@ -267,7 +280,7 @@ namespace velodyne {
         _udpConnectionPP->getPort());
     else
      status.summaryf(diagnostic_msgs::DiagnosticStatus::ERROR,
-      "UDP connection closed.");
+      "UDP connection closed on %d.", _devicePortPP);
   }
 
   void VelodyneNode::diagnoseSerialConnection(
@@ -278,7 +291,7 @@ namespace velodyne {
         _serialConnection->getDevicePathStr().c_str());
     else
      status.summaryf(diagnostic_msgs::DiagnosticStatus::ERROR,
-      "Serial connection closed.");
+      "Serial connection closed on %s.", _serialDeviceStr.c_str());
   }
 
   void VelodyneNode::diagnoseDataPacketQueue(
@@ -336,6 +349,20 @@ namespace velodyne {
         if (!_acqThreadDP->getBuffer().isEmpty()) {
           std::shared_ptr<DataPacket> dp(_acqThreadDP->getBuffer().dequeue());
           const ros::Time timestamp = ros::Time::now();
+          const double startAngle = Calibration::deg2rad(
+            dp->getDataChunk(0).mRotationalInfo /
+            (double)DataPacket::mRotationResolution);
+          const double endAngle = Calibration::deg2rad(
+            dp->getDataChunk(DataPacket::mDataChunkNbr - 1).mRotationalInfo /
+            (double)DataPacket::mRotationResolution);
+          if (_lastStartAngle > endAngle || startAngle > endAngle) {
+            _currentPointsPerRevolution = _revolutionPacketCounter * 384;
+            _revolutionPacketCounter = 0;
+          }
+          else {
+            _revolutionPacketCounter++;
+          }
+          _lastStartAngle = startAngle;
           publishDataPacket(timestamp, *dp);
         }
         if (_deviceName == "Velodyne HDL-32E" &&
@@ -379,8 +406,16 @@ namespace velodyne {
     _nodeHandle.param<int>("serial_connection/baud_rate", _serialBaudrate,
       115200);
     _nodeHandle.param<double>("connection/retry_timeout", _retryTimeout, 1);
-    _nodeHandle.param<double>("diagnostics/dp_min_freq", _dpMinFreq, 10);
-    _nodeHandle.param<double>("diagnostics/dp_max_freq", _dpMaxFreq, 200);
+    if (_deviceName == "Velodyne HDL-64E S2") {
+      // we should have 3472.166666667 packets per second +- 20%
+      _nodeHandle.param<double>("diagnostics/dp_min_freq", _dpMinFreq, 2777.73);
+      _nodeHandle.param<double>("diagnostics/dp_max_freq", _dpMaxFreq, 4166.6);
+    }
+    else {
+      // we should have 1736.083333333 packets per second +- 20%
+      _nodeHandle.param<double>("diagnostics/dp_min_freq", _dpMinFreq, 1388.87);
+      _nodeHandle.param<double>("diagnostics/dp_max_freq", _dpMaxFreq, 2083.30);
+    }
     _nodeHandle.param<double>("diagnostics/pp_min_freq", _ppMinFreq, 0.1);
     _nodeHandle.param<double>("diagnostics/pp_max_freq", _ppMaxFreq, 100);
     _nodeHandle.param<int>("sensor/buffer_capacity", _bufferCapacity, 100000);
@@ -397,6 +432,12 @@ namespace velodyne {
     else
       ROS_ERROR_STREAM("Unknown device: " << _deviceName);
     _nodeHandle.param<int>("sensor/spin_rate", _spinRate, 300);
+    if (_deviceName == "Velodyne HDL-64E S2")
+      // from the datasheet
+      _targetPointsPerRevolution = 20833.0 * 64.0 / (_spinRate / 60.0);
+    else
+      // from the datasheet
+      _targetPointsPerRevolution = 20833.0 * 32.0 / 10.0;
     _nodeHandle.param<std::string>("sensor/data_packet_publish",
       _dataPacketPublish, "point_cloud");
     if (_dataPacketPublish != "point_cloud" &&

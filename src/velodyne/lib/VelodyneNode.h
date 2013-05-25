@@ -179,6 +179,18 @@ namespace velodyne {
     double _maxDistance;
     /// Queue depth
     int _queueDepth;
+    /// Data packet counter
+    long _dataPacketCounter;
+    /// Position packet counter
+    long _positionPacketCounter;
+    /// Theoretical points per revolution
+    double _targetPointsPerRevolution;
+    /// Packet counter for one sensor revolution
+    size_t _revolutionPacketCounter;
+    /// Last starting angle
+    double _lastStartAngle;
+    /// Actual points per revolution
+    double _currentPointsPerRevolution;
     /** @}
       */
 

@@ -10,8 +10,8 @@ sensor:
   device_name: "Velodyne HDL-32E"
   data_packet_publish: "data_packet"
 diagnostics:
-  dp_min_freq: 10.0
-  dp_max_freq: 200.0
+  dp_min_freq: 1388.87
+  dp_max_freq: 2083.30
   pp_min_freq: 0.1
   pp_max_freq: 100.0
 ros:

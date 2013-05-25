@@ -1,3 +1,9 @@
+velodyne-ros (1:0.1-32) precise; urgency=low
+
+  * update diagnostic tools, packet counters, frequency
+
+ -- Jerome Maye <jerome.maye@mavt.ethz.ch>  Sat, 25 May 2013 10:47:55 +0000
+
 velodyne-ros (1:0.1-31) precise; urgency=low
 
   * making thread end safely 
