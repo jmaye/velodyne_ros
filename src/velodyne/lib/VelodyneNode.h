@@ -119,6 +119,8 @@ namespace velodyne {
     ros::Publisher _scanCloudPublisher;
     /// Data packet publisher
     ros::Publisher _dataPacketPublisher;
+    /// Snappy binary publisher
+    ros::Publisher _binarySnappyPublisher;
     /// IMU publisher
     ros::Publisher _imuPublisher;
     /// Temperature publisher

@@ -1,3 +1,9 @@
+velodyne-ros (1:0.1-33) precise; urgency=low
+
+  * adding snappy compression 
+
+ -- Jerome Maye <jerome.maye@mavt.ethz.ch>  Mon, 27 May 2013 15:23:42 +0000
+
 velodyne-ros (1:0.1-32) precise; urgency=low
 
   * update diagnostic tools, packet counters, frequency

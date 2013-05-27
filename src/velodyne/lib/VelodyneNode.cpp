@@ -19,10 +19,13 @@
 #include "VelodyneNode.h"
 
 #include <fstream>
+#include <sstream>
 
 #include <diagnostic_updater/publisher.h>
 
 #include <boost/shared_ptr.hpp>
+
+#include <snappy.h>
 
 #include <sensor_msgs/PointCloud.h>
 #include <sensor_msgs/Imu.h>
@@ -47,6 +50,7 @@
 #include "velodyne/DataPacketMsg.h"
 #include "velodyne/DataChunkMsg.h"
 #include "velodyne/LaserDataMsg.h"
+#include "velodyne/BinarySnappyMsg.h"
 
 #define GRAV_ACC 9.80665
 
@@ -87,6 +91,10 @@ namespace velodyne {
     else if (_dataPacketPublish == "data_packet")
       _dataPacketPublisher =
         _nodeHandle.advertise<velodyne::DataPacketMsg>(_dataPacketPublish,
+        _queueDepth);
+    else if (_dataPacketPublish == "binary_snappy")
+      _binarySnappyPublisher =
+        _nodeHandle.advertise<velodyne::BinarySnappyMsg>(_dataPacketPublish,
         _queueDepth);
     if (_deviceName == "Velodyne HDL-32E") {
       _imuPublisher = _nodeHandle.advertise<sensor_msgs::Imu>("imu",
@@ -202,6 +210,22 @@ namespace velodyne {
         }
       }
       _dataPacketPublisher.publish(dataPacketMsg);
+    }
+    else if (_dataPacketPublish == "binary_snappy") {
+      velodyne::BinarySnappyMsgPtr binarySnappyMsg(
+        new velodyne::BinarySnappyMsg);
+      binarySnappyMsg->header.stamp = ros::Time(dp.getTimestamp());
+      binarySnappyMsg->header.frame_id = _frameId;
+      binarySnappyMsg->header.seq = _dataPacketCounter++;
+      std::stringstream binaryStream;
+      dp.writeBinary(binaryStream);
+      _binarySnappyPublisher.publish(binarySnappyMsg);
+      std::string binaryStreamSnappy;
+      snappy::Compress(binaryStream.str().data(),
+        binaryStream.str().size(), &binaryStreamSnappy);
+      binarySnappyMsg->data.resize(binaryStreamSnappy.size());
+      std::copy(binaryStreamSnappy.begin(), binaryStreamSnappy.end(),
+        binarySnappyMsg->data.begin());
     }
     _dpFreq->tick();
   }
@@ -442,7 +466,8 @@ namespace velodyne {
       _dataPacketPublish, "point_cloud");
     if (_dataPacketPublish != "point_cloud" &&
        _dataPacketPublish != "scan_cloud" &&
-       _dataPacketPublish != "data_packet")
+       _dataPacketPublish != "data_packet" &&
+       _dataPacketPublish != "binary_snappy")
       ROS_ERROR_STREAM("Unknown publisher: " << _dataPacketPublish);
   }
 
