@@ -402,12 +402,12 @@ namespace velodyne {
         ROS_WARN_STREAM("Retrying in " << _retryTimeout << " [s]");
         timer.sleep(_retryTimeout);
       }
-      catch (SystemException& e) {
+      catch (const SystemException& e) {
         ROS_WARN_STREAM("SystemException: " << e.what());
         ROS_WARN_STREAM("Retrying in " << _retryTimeout << " [s]");
         timer.sleep(_retryTimeout);
       }
-      catch (InvalidOperationException& e) {
+      catch (const InvalidOperationException& e) {
         ROS_WARN_STREAM("InvalidOperationException: " << e.what());
         ROS_WARN_STREAM("Retrying in " << _retryTimeout << " [s]");
         timer.sleep(_retryTimeout);
@@ -426,7 +426,7 @@ namespace velodyne {
     _nodeHandle.param<int>("udp_connection/device_port_pp", _devicePortPP,
       8308);
     _nodeHandle.param<std::string>("serial_connection/serial_device",
-      _serialDeviceStr, "/dev/velodyne_serial");
+      _serialDeviceStr, "/dev/janeth/velodyne");
     _nodeHandle.param<int>("serial_connection/baud_rate", _serialBaudrate,
       115200);
     _nodeHandle.param<double>("connection/retry_timeout", _retryTimeout, 1);
