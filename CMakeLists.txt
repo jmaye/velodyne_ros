@@ -18,3 +18,10 @@ remake_project(
 )
 
 remake_ros_pack_deb()
+
+#remake_ros_distribute_deb(
+#  DISTRIBUTION precise
+#  SECTION libs
+#  UPLOAD ppa:jmaye/ros
+#  PASS CMAKE_BUILD_TYPE VELODYNE_ROS_GIT_REVISION
+#)

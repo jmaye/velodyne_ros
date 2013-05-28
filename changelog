@@ -1,3 +1,9 @@
+velodyne-ros (1:0.1-34) precise; urgency=low
+
+  * adding missing file 
+
+ -- Jerome Maye <jerome.maye@mavt.ethz.ch>  Tue, 28 May 2013 09:12:57 +0000
+
 velodyne-ros (1:0.1-33) precise; urgency=low
 
   * adding snappy compression 

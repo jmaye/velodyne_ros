@@ -4,5 +4,5 @@ remake_find_package(libsnappy CONFIG)
 remake_include(${LIBVELODYNE_INCLUDE_DIRS})
 remake_include(${LIBSNAPPY_INCLUDE_DIRS})
 
-remake_ros_package_add_library(vdyne LINK ${LIBVELODYNE_LIBRARIES}
+remake_ros_package_add_library(velodyne-ros LINK ${LIBVELODYNE_LIBRARIES}
   ${LIBSNAPPY_LIBRARIES})
