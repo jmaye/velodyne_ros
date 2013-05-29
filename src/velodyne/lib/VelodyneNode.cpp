@@ -18,8 +18,6 @@
 
 #include "VelodyneNode.h"
 
-#include <cstddef>
-
 #include <fstream>
 #include <sstream>
 
@@ -134,9 +132,9 @@ namespace velodyne {
   }
 
   VelodyneNode::~VelodyneNode() {
-    if (_acqThreadPP != nullptr)
+    if (_acqThreadPP)
       _acqThreadPP->interrupt();
-    if (_acqThreadDP != nullptr)
+    if (_acqThreadDP)
       _acqThreadDP->interrupt();
   }
 
@@ -272,7 +270,7 @@ namespace velodyne {
         "the range [" << Controller::mMinRPM << ", "
         << Controller::mMaxRPM << "]");
     }
-    if (_serialConnection != nullptr && _serialConnection->isOpen()) {
+    if (_serialConnection && _serialConnection->isOpen()) {
       Controller controller(*_serialConnection);
       controller.setRPM(_spinRate);
       response.Response = true;
@@ -286,7 +284,7 @@ namespace velodyne {
 
   void VelodyneNode::diagnoseUDPConnectionDP(
       diagnostic_updater::DiagnosticStatusWrapper& status) {
-    if (_udpConnectionDP != nullptr && _udpConnectionDP->isOpen()) {
+    if (_udpConnectionDP && _udpConnectionDP->isOpen()) {
       status.add("Current points per revolution", _currentPointsPerRevolution);
       status.add("Target points per revolution", _targetPointsPerRevolution);
       status.summaryf(diagnostic_msgs::DiagnosticStatus::OK,
@@ -300,7 +298,7 @@ namespace velodyne {
 
   void VelodyneNode::diagnoseUDPConnectionPP(
       diagnostic_updater::DiagnosticStatusWrapper& status) {
-    if (_udpConnectionPP != nullptr && _udpConnectionPP->isOpen())
+    if (_udpConnectionPP && _udpConnectionPP->isOpen())
       status.summaryf(diagnostic_msgs::DiagnosticStatus::OK,
         "UDP connection opened on %d.",
         _udpConnectionPP->getPort());
@@ -311,7 +309,7 @@ namespace velodyne {
 
   void VelodyneNode::diagnoseSerialConnection(
       diagnostic_updater::DiagnosticStatusWrapper& status) {
-    if (_serialConnection != nullptr && _serialConnection->isOpen())
+    if (_serialConnection && _serialConnection->isOpen())
       status.summaryf(diagnostic_msgs::DiagnosticStatus::OK,
         "Serial connection opened on %s.",
         _serialConnection->getDevicePathStr().c_str());
@@ -322,7 +320,7 @@ namespace velodyne {
 
   void VelodyneNode::diagnoseDataPacketQueue(
       diagnostic_updater::DiagnosticStatusWrapper& status) {
-    if (_acqThreadDP != nullptr) {
+    if (_acqThreadDP) {
       status.add("Size", _acqThreadDP->getBuffer().getSize());
       status.add("Dropped elements",
         _acqThreadDP->getBuffer().getNumDroppedElements());
@@ -336,7 +334,7 @@ namespace velodyne {
 
   void VelodyneNode::diagnosePositionPacketQueue(
       diagnostic_updater::DiagnosticStatusWrapper& status) {
-    if (_acqThreadPP != nullptr) {
+    if (_acqThreadPP) {
       status.add("Size", _acqThreadPP->getBuffer().getSize());
       status.add("Dropped elements",
         _acqThreadPP->getBuffer().getNumDroppedElements());
@@ -355,7 +353,7 @@ namespace velodyne {
     _udpConnectionDP.reset(new UDPConnectionServer(_devicePortDP));
     _serialConnection.reset(new SerialConnection(_serialDeviceStr,
       _serialBaudrate));
-    if (_serialConnection != nullptr && _serialConnection->isOpen()) {
+    if (_serialConnection && _serialConnection->isOpen()) {
       Controller controller(*_serialConnection);
       controller.setRPM(_spinRate);
     }
