@@ -8,7 +8,7 @@ sensor:
   min_distance: 0.05
   max_distance: 100.0
   device_name: "Velodyne HDL-32E"
-  data_packet_publish: "data_packet"
+  data_packet_publish: "binary_snappy"
 diagnostics:
   dp_min_freq: 1388.87
   dp_max_freq: 2083.30

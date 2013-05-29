@@ -11,7 +11,7 @@ sensor:
   max_distance: 120.0
   device_name: "Velodyne HDL-64E S2"
   spin_rate: 300
-  data_packet_publish: "data_packet"
+  data_packet_publish: "binary_snappy"
 diagnostics:
   dp_min_freq: 2777.73
   dp_max_freq: 4166.6

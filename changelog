@@ -1,3 +1,9 @@
+velodyne-ros (1:0.1-37) precise; urgency=low
+
+  * missing dependencies 
+
+ -- Jerome Maye <jerome.maye@mavt.ethz.ch>  Wed, 29 May 2013 07:52:41 +0000
+
 velodyne-ros (1:0.1-36) precise; urgency=low
 
   * distribution to ppa
