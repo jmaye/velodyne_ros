@@ -1,3 +1,9 @@
+velodyne-ros (1:0.1-38) precise; urgency=low
+
+  * adding an include for the PPA 
+
+ -- Jerome Maye <jerome.maye@mavt.ethz.ch>  Wed, 29 May 2013 09:12:58 +0000
+
 velodyne-ros (1:0.1-37) precise; urgency=low
 
   * missing dependencies 

@@ -18,6 +18,8 @@
 
 #include "VelodyneNode.h"
 
+#include <cstddef>
+
 #include <fstream>
 #include <sstream>
 
