@@ -1,3 +1,9 @@
+velodyne-ros (1:0.1-42) precise; urgency=low
+
+  * make the node respawning 
+
+ -- Jerome Maye <jerome.maye@mavt.ethz.ch>  Thu, 30 May 2013 17:48:34 +0000
+
 velodyne-ros (1:0.1-41) precise; urgency=low
 
   * update of remake for mixing ROS distributions 
