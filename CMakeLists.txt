@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.6)
 include(ReMake)
 
 remake_project(
-  velodyne-ros
+  velodyne-ros-${ROS_DISTRIBUTION}
   VERSION 1:0.1
   RELEASE alpha
   SUMMARY "ROS driver for Velodyne HDL devices."

@@ -1,3 +1,9 @@
+velodyne-ros (1:0.1-40) precise; urgency=low
+
+  * changing package name for PPA 
+
+ -- Jerome Maye <jerome.maye@mavt.ethz.ch>  Thu, 30 May 2013 07:49:39 +0000
+
 velodyne-ros (1:0.1-39) precise; urgency=low
 
   * removing nullptr 
