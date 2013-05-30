@@ -1,3 +1,9 @@
+velodyne-ros (1:0.1-41) precise; urgency=low
+
+  * update of remake for mixing ROS distributions 
+
+ -- Jerome Maye <jerome.maye@mavt.ethz.ch>  Thu, 30 May 2013 13:45:59 +0000
+
 velodyne-ros (1:0.1-40) precise; urgency=low
 
   * changing package name for PPA 
