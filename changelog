@@ -1,4 +1,10 @@
-velodyne-ros (1:0.1-42ubuntu1) precise; urgency=low
+velodyne-ros (1:0.1-44) precise; urgency=low
+
+  * correcting version number
+
+ -- Jerome Maye <jerome.maye@mavt.ethz.ch>  Fri, 31 May 2013 14:40:01 +0000
+
+velodyne-ros (1:0.1-43) precise; urgency=low
 
   * adding a python file for setting RPM
     adding a rate to the main loop, avoiding overload of CPU
