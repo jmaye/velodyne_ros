@@ -1,2 +1,2 @@
-uint16 Distance
-uint8 Intensity
+uint16 distance
+uint8 intensity

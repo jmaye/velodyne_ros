@@ -1,3 +1,11 @@
+velodyne-ros (1:0.1-42ubuntu1) precise; urgency=low
+
+  * adding a python file for setting RPM
+    adding a rate to the main loop, avoiding overload of CPU
+    publishing on all the topics, to be tested if we don't lose data 
+
+ -- Jerome Maye <jmaye@jmaye-laptop>  Fri, 31 May 2013 14:31:54 +0000
+
 velodyne-ros (1:0.1-42) precise; urgency=low
 
   * make the node respawning 

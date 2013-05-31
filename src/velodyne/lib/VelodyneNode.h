@@ -115,8 +115,6 @@ namespace velodyne {
     ros::NodeHandle _nodeHandle;
     /// Point cloud publisher
     ros::Publisher _pointCloudPublisher;
-    /// Scan cloud publisher
-    ros::Publisher _scanCloudPublisher;
     /// Data packet publisher
     ros::Publisher _dataPacketPublisher;
     /// Snappy binary publisher
@@ -193,6 +191,14 @@ namespace velodyne {
     double _lastStartAngle;
     /// Actual points per revolution
     double _currentPointsPerRevolution;
+    /// Last DP timestamp
+    double _lastDPTimestamp;
+    /// Last inter-data packet time
+    double _lastInterDPTime;
+    /// Last position packet timestamp
+    double _lastPPTimestamp;
+    /// Last inter-position packet time
+    double _lastInterPPTime;
     /** @}
       */
 

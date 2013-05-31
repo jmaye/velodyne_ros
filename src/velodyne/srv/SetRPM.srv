@@ -1,3 +1,5 @@
-uint32 SpinRate
+uint32 spinRate
 ---
-bool Response
+bool response
+uint32 spinRate
+string message

@@ -1,2 +1,2 @@
 Header header
-float32 Temperature # temperature in Celsius
+float32 temperature # temperature in Celsius

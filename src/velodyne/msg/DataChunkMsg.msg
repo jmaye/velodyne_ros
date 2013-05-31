@@ -1,3 +1,3 @@
-uint16 HeaderInfo
-uint16 RotationalInfo
-velodyne/LaserDataMsg[32] LaserData
+uint16 headerInfo
+uint16 rotationalInfo
+velodyne/LaserDataMsg[32] laserData
