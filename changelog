@@ -1,3 +1,9 @@
+velodyne-ros (1:0.1-45) precise; urgency=low
+
+  * removing include on scan cloud 
+
+ -- Jerome Maye <jerome.maye@mavt.ethz.ch>  Fri, 31 May 2013 14:45:32 +0000
+
 velodyne-ros (1:0.1-44) precise; urgency=low
 
   * correcting version number

@@ -46,7 +46,6 @@
 #include <libvelodyne/sensor/Calibration.h>
 #include <libvelodyne/sensor/Controller.h>
 #include <libvelodyne/data-structures/VdynePointCloud.h>
-#include <libvelodyne/data-structures/VdyneScanCloud.h>
 
 #include "velodyne/TemperatureMsg.h"
 #include "velodyne/DataPacketMsg.h"
