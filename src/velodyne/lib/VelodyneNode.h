@@ -171,8 +171,6 @@ namespace velodyne {
     std::shared_ptr<AcquisitionThread<DataPacket> > _acqThreadDP;
     /// Acquisition thread for position packets
     std::shared_ptr<AcquisitionThread<PositionPacket> > _acqThreadPP;
-    /// How to publish data packets
-    std::string _dataPacketPublish;
     /// Min distance for conversions
     double _minDistance;
     /// Max distance for conversions

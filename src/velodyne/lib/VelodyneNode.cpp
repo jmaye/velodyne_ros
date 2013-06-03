@@ -85,18 +85,6 @@ namespace velodyne {
         "the range [" << Controller::mMinRPM << ", "
         << Controller::mMaxRPM << "]");
     }
-//    if (_dataPacketPublish == "point_cloud")
-//      _pointCloudPublisher =
-//        _nodeHandle.advertise<sensor_msgs::PointCloud>(_dataPacketPublish,
-//        _queueDepth);
-//    else if (_dataPacketPublish == "data_packet")
-//      _dataPacketPublisher =
-//        _nodeHandle.advertise<velodyne::DataPacketMsg>(_dataPacketPublish,
-//        _queueDepth);
-//    else if (_dataPacketPublish == "binary_snappy")
-//      _binarySnappyPublisher =
-//        _nodeHandle.advertise<velodyne::BinarySnappyMsg>(_dataPacketPublish,
-//        _queueDepth);
     _pointCloudPublisher =
       _nodeHandle.advertise<sensor_msgs::PointCloud>("point_cloud",
       _queueDepth);
@@ -129,10 +117,6 @@ namespace velodyne {
     if (_deviceName == "Velodyne HDL-64E S2")
       _updater.add("Serial connection", this,
         &VelodyneNode::diagnoseSerialConnection);
-//    _dpFreq.reset(new diagnostic_updater::HeaderlessTopicDiagnostic(
-//      _dataPacketPublish, _updater,
-//      diagnostic_updater::FrequencyStatusParam(&_dpMinFreq, &_dpMaxFreq,
-//      0.1, 10)));
     _dpFreq.reset(new diagnostic_updater::HeaderlessTopicDiagnostic(
       "data_packet", _updater,
       diagnostic_updater::FrequencyStatusParam(&_dpMinFreq, &_dpMaxFreq,
@@ -158,65 +142,57 @@ namespace velodyne {
 
   void VelodyneNode::publishDataPacket(const ros::Time& timestamp,
       const DataPacket& dp) {
-//    if (_dataPacketPublish == "point_cloud") {
-      VdynePointCloud pointCloud;
-      Converter::toPointCloud(dp, *_calibration, pointCloud, _minDistance,
-        _maxDistance);
-      sensor_msgs::PointCloudPtr rosCloud(new sensor_msgs::PointCloud);
-      rosCloud->header.stamp = timestamp;
-      rosCloud->header.frame_id = _frameId;
-      rosCloud->header.seq = _dataPacketCounter++;
-      const size_t numPoints = pointCloud.getSize();
-      rosCloud->points.reserve(numPoints);
-      rosCloud->channels.resize(1);
-      rosCloud->channels[0].name = "intensity";
-      rosCloud->channels[0].values.reserve(numPoints);
-      for (auto it = pointCloud.getPointBegin(); it != pointCloud.getPointEnd();
-          ++it) {
-        geometry_msgs::Point32 rosPoint;
-        rosPoint.x = it->mX;
-        rosPoint.y = it->mY;
-        rosPoint.z = it->mZ;
-        rosCloud->points.push_back(rosPoint);
-        rosCloud->channels[0].values.push_back(it->mIntensity);
+    VdynePointCloud pointCloud;
+    Converter::toPointCloud(dp, *_calibration, pointCloud, _minDistance,
+      _maxDistance);
+    sensor_msgs::PointCloudPtr rosCloud(new sensor_msgs::PointCloud);
+    rosCloud->header.stamp = timestamp;
+    rosCloud->header.frame_id = _frameId;
+    rosCloud->header.seq = _dataPacketCounter++;
+    const size_t numPoints = pointCloud.getSize();
+    rosCloud->points.reserve(numPoints);
+    rosCloud->channels.resize(1);
+    rosCloud->channels[0].name = "intensity";
+    rosCloud->channels[0].values.reserve(numPoints);
+    for (auto it = pointCloud.getPointBegin(); it != pointCloud.getPointEnd();
+        ++it) {
+      geometry_msgs::Point32 rosPoint;
+      rosPoint.x = it->mX;
+      rosPoint.y = it->mY;
+      rosPoint.z = it->mZ;
+      rosCloud->points.push_back(rosPoint);
+      rosCloud->channels[0].values.push_back(it->mIntensity);
+    }
+    _pointCloudPublisher.publish(rosCloud);
+    velodyne::DataPacketMsgPtr dataPacketMsg(new velodyne::DataPacketMsg);
+    dataPacketMsg->header.stamp = timestamp;
+    dataPacketMsg->header.frame_id = _frameId;
+    dataPacketMsg->header.seq = _dataPacketCounter++;
+    for (size_t i = 0; i < DataPacket::mDataChunkNbr; ++i) {
+      const DataPacket::DataChunk& dataChunk = dp.getDataChunk(i);
+      dataPacketMsg->dataChunks[i].headerInfo = dataChunk.mHeaderInfo;
+      dataPacketMsg->dataChunks[i].rotationalInfo = dataChunk.mRotationalInfo;
+      for (size_t j = 0; j < DataPacket::DataChunk::mLasersPerPacket; ++j) {
+        dataPacketMsg->dataChunks[i].laserData[j].distance =
+          dataChunk.mLaserData[j].mDistance;
+        dataPacketMsg->dataChunks[i].laserData[j].intensity =
+          dataChunk.mLaserData[j].mIntensity;
       }
-      _pointCloudPublisher.publish(rosCloud);
-//    }
-//    else if (_dataPacketPublish == "data_packet") {
-      velodyne::DataPacketMsgPtr dataPacketMsg(
-        new velodyne::DataPacketMsg);
-      dataPacketMsg->header.stamp = timestamp;
-      dataPacketMsg->header.frame_id = _frameId;
-      dataPacketMsg->header.seq = _dataPacketCounter++;
-      for (size_t i = 0; i < DataPacket::mDataChunkNbr; ++i) {
-        const DataPacket::DataChunk& dataChunk = dp.getDataChunk(i);
-        dataPacketMsg->dataChunks[i].headerInfo = dataChunk.mHeaderInfo;
-        dataPacketMsg->dataChunks[i].rotationalInfo = dataChunk.mRotationalInfo;
-        for (size_t j = 0; j < DataPacket::DataChunk::mLasersPerPacket; ++j) {
-          dataPacketMsg->dataChunks[i].laserData[j].distance =
-            dataChunk.mLaserData[j].mDistance;
-          dataPacketMsg->dataChunks[i].laserData[j].intensity =
-            dataChunk.mLaserData[j].mIntensity;
-        }
-      }
-      _dataPacketPublisher.publish(dataPacketMsg);
-//    }
-//    else if (_dataPacketPublish == "binary_snappy") {
-      velodyne::BinarySnappyMsgPtr binarySnappyMsg(
-        new velodyne::BinarySnappyMsg);
-      binarySnappyMsg->header.stamp = timestamp;
-      binarySnappyMsg->header.frame_id = _frameId;
-      binarySnappyMsg->header.seq = _dataPacketCounter++;
-      std::stringstream binaryStream;
-      dp.writeBinary(binaryStream);
-      _binarySnappyPublisher.publish(binarySnappyMsg);
-      std::string binaryStreamSnappy;
-      snappy::Compress(binaryStream.str().data(),
-        binaryStream.str().size(), &binaryStreamSnappy);
-      binarySnappyMsg->data.resize(binaryStreamSnappy.size());
-      std::copy(binaryStreamSnappy.begin(), binaryStreamSnappy.end(),
-        binarySnappyMsg->data.begin());
-//    }
+    }
+    _dataPacketPublisher.publish(dataPacketMsg);
+    velodyne::BinarySnappyMsgPtr binarySnappyMsg(new velodyne::BinarySnappyMsg);
+    binarySnappyMsg->header.stamp = timestamp;
+    binarySnappyMsg->header.frame_id = _frameId;
+    binarySnappyMsg->header.seq = _dataPacketCounter++;
+    std::stringstream binaryStream;
+    dp.writeBinary(binaryStream);
+    _binarySnappyPublisher.publish(binarySnappyMsg);
+    std::string binaryStreamSnappy;
+    snappy::Compress(binaryStream.str().data(),
+      binaryStream.str().size(), &binaryStreamSnappy);
+    binarySnappyMsg->data.resize(binaryStreamSnappy.size());
+    std::copy(binaryStreamSnappy.begin(), binaryStreamSnappy.end(),
+      binarySnappyMsg->data.begin());
     _dpFreq->tick();
   }
 
@@ -326,7 +302,7 @@ namespace velodyne {
         "Serial connection opened on %s.",
         _serialConnection->getDevicePathStr().c_str());
     else
-     status.summaryf(diagnostic_msgs::DiagnosticStatus::ERROR,
+     status.summaryf(diagnostic_msgs::DiagnosticStatus::WARN,
       "Serial connection closed on %s.", _serialDeviceStr.c_str());
   }
 
@@ -408,9 +384,7 @@ namespace velodyne {
       _acqThreadPP->start();
     }
     Timer timer;
-    ros::Rate r(3500); // maximum rate of the Velodyne HDL 64
     while (_nodeHandle.ok()) {
-      const double startLoopTime = Timestamp::now();
       try {
         if (!_acqThreadDP->getBuffer().isEmpty()) {
           std::shared_ptr<DataPacket> dp(_acqThreadDP->getBuffer().dequeue());
@@ -420,7 +394,7 @@ namespace velodyne {
           const double endAngle = Calibration::deg2rad(
             dp->getDataChunk(DataPacket::mDataChunkNbr - 1).mRotationalInfo /
             (double)DataPacket::mRotationResolution);
-          if (_lastStartAngle > endAngle || startAngle > endAngle) {
+          if ((_lastStartAngle > endAngle || startAngle > endAngle) && _revolutionPacketCounter) {
             _currentPointsPerRevolution = _revolutionPacketCounter * 384;
             _revolutionPacketCounter = 0;
           }
@@ -462,7 +436,6 @@ namespace velodyne {
       }
       _updater.update();
       ros::spinOnce();
-      r.sleep();
     }
   }
 
@@ -511,12 +484,6 @@ namespace velodyne {
     else
       // from the datasheet
       _targetPointsPerRevolution = 20833.0 * 32.0 / 10.0;
-    _nodeHandle.param<std::string>("sensor/data_packet_publish",
-      _dataPacketPublish, "point_cloud");
-    if (_dataPacketPublish != "point_cloud" &&
-       _dataPacketPublish != "data_packet" &&
-       _dataPacketPublish != "binary_snappy")
-      ROS_ERROR_STREAM("Unknown publisher: " << _dataPacketPublish);
   }
 
 }
