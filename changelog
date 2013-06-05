@@ -1,3 +1,9 @@
+velodyne-ros (1:0.1-47) precise; urgency=low
+
+  * changing frame_id 
+
+ -- Jerome Maye <jerome.maye@mavt.ethz.ch>  Wed, 05 Jun 2013 17:32:15 +0000
+
 velodyne-ros (1:0.1-46) precise; urgency=low
 
   * small bugs discovered on the field 

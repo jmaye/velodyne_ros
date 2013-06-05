@@ -15,4 +15,4 @@ diagnostics:
   pp_max_freq: 100.0
 ros:
   queue_depth: 100
-  frame_id: "vehicle_velodyne_link"
+  frame_id: "/velodyne_link"

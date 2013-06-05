@@ -441,7 +441,7 @@ namespace velodyne {
 
   void VelodyneNode::getParameters() {
     _nodeHandle.param<std::string>("ros/frame_id", _frameId,
-      "vehicle_velodyne_link");
+      "/velodyne_link");
     _nodeHandle.param<int>("ros/queue_depth", _queueDepth, 100);
     _nodeHandle.param<int>("udp_connection/device_port_dp", _devicePortDP,
       2368);
