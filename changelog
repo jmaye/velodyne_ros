@@ -1,3 +1,9 @@
+velodyne-ros (1:0.1-49) precise; urgency=low
+
+  * distribute for groovy 
+
+ -- Jerome Maye <jerome.maye@mavt.ethz.ch>  Thu, 06 Jun 2013 08:45:51 +0000
+
 velodyne-ros (1:0.1-48) precise; urgency=low
 
   * increasing version for PPA 
