@@ -184,7 +184,7 @@ namespace velodyne {
     binarySnappyMsg->header.stamp = timestamp;
     binarySnappyMsg->header.frame_id = _frameId;
     binarySnappyMsg->header.seq = _dataPacketCounter++;
-    std::stringstream binaryStream;
+    std::ostringstream binaryStream;
     dp.writeBinary(binaryStream);
     _binarySnappyPublisher.publish(binarySnappyMsg);
     std::string binaryStreamSnappy;

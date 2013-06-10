@@ -1,3 +1,9 @@
+velodyne-ros (1:0.1-51) precise; urgency=low
+
+  * changing stringstream to ostringstream 
+
+ -- Jerome Maye <jerome.maye@mavt.ethz.ch>  Mon, 10 Jun 2013 11:01:46 +0000
+
 velodyne-ros (1:0.1-50) precise; urgency=low
 
   * rosbash dep for groovy 
