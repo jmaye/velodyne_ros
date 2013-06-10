@@ -1,3 +1,9 @@
+velodyne-ros (1:0.1-52) precise; urgency=low
+
+  * packet counter was wrong 
+
+ -- Jerome Maye <jerome.maye@mavt.ethz.ch>  Mon, 10 Jun 2013 11:28:01 +0000
+
 velodyne-ros (1:0.1-51) precise; urgency=low
 
   * changing stringstream to ostringstream 

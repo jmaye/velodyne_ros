@@ -148,7 +148,7 @@ namespace velodyne {
     sensor_msgs::PointCloudPtr rosCloud(new sensor_msgs::PointCloud);
     rosCloud->header.stamp = timestamp;
     rosCloud->header.frame_id = _frameId;
-    rosCloud->header.seq = _dataPacketCounter++;
+    rosCloud->header.seq = _dataPacketCounter;
     const size_t numPoints = pointCloud.getSize();
     rosCloud->points.reserve(numPoints);
     rosCloud->channels.resize(1);
@@ -167,7 +167,7 @@ namespace velodyne {
     velodyne::DataPacketMsgPtr dataPacketMsg(new velodyne::DataPacketMsg);
     dataPacketMsg->header.stamp = timestamp;
     dataPacketMsg->header.frame_id = _frameId;
-    dataPacketMsg->header.seq = _dataPacketCounter++;
+    dataPacketMsg->header.seq = _dataPacketCounter;
     for (size_t i = 0; i < DataPacket::mDataChunkNbr; ++i) {
       const DataPacket::DataChunk& dataChunk = dp.getDataChunk(i);
       dataPacketMsg->dataChunks[i].headerInfo = dataChunk.mHeaderInfo;
