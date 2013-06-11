@@ -186,13 +186,13 @@ namespace velodyne {
     binarySnappyMsg->header.seq = _dataPacketCounter++;
     std::ostringstream binaryStream;
     dp.writeBinary(binaryStream);
-    _binarySnappyPublisher.publish(binarySnappyMsg);
     std::string binaryStreamSnappy;
     snappy::Compress(binaryStream.str().data(),
       binaryStream.str().size(), &binaryStreamSnappy);
     binarySnappyMsg->data.resize(binaryStreamSnappy.size());
     std::copy(binaryStreamSnappy.begin(), binaryStreamSnappy.end(),
       binarySnappyMsg->data.begin());
+    _binarySnappyPublisher.publish(binarySnappyMsg);
     _dpFreq->tick();
   }
 

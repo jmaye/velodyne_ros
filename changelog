@@ -1,3 +1,9 @@
+velodyne-ros (1:0.1-53) precise; urgency=low
+
+  * bug in snappy publisher 
+
+ -- Jerome Maye <jerome.maye@mavt.ethz.ch>  Tue, 11 Jun 2013 19:31:48 +0200
+
 velodyne-ros (1:0.1-52) precise; urgency=low
 
   * packet counter was wrong 
