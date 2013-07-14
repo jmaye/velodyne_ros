@@ -1,3 +1,9 @@
+velodyne-ros (1:0.1-54) precise; urgency=low
+
+  * update version 
+
+ -- Jerome Maye <jerome.maye@mavt.ethz.ch>  Sun, 14 Jul 2013 15:50:55 +0000
+
 velodyne-ros (1:0.1-53) precise; urgency=low
 
   * bug in snappy publisher 
