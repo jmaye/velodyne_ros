@@ -1,3 +1,9 @@
+velodyne-ros (1:0.1-55) precise; urgency=low
+
+  * another try in groovy 
+
+ -- Jerome Maye <jerome.maye@mavt.ethz.ch>  Thu, 18 Jul 2013 14:16:30 +0000
+
 velodyne-ros (1:0.1-54) precise; urgency=low
 
   * update version 
