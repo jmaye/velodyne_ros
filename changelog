@@ -1,3 +1,9 @@
+velodyne-ros (1:0.1-56) precise; urgency=low
+
+  * remake update
+
+ -- Jerome Maye <jerome.maye@mavt.ethz.ch>  Fri, 19 Jul 2013 07:34:48 +0000
+
 velodyne-ros (1:0.1-55) precise; urgency=low
 
   * another try in groovy 
