@@ -5,3 +5,4 @@ remake_ros_package(
   EXTRA_RUN_DEPENDS libvelodyne libsnappy
   DESCRIPTION "Driver for Velodyne HDL devices."
 )
+remake_ros_package_config_generate(PACKAGE velodyne EXTRA_CFLAGS -std=c++0x)

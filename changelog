@@ -1,3 +1,9 @@
+velodyne-ros (1:0.1-57) precise; urgency=low
+
+  * adding pkg-config 
+
+ -- Jerome Maye <jerome.maye@mavt.ethz.ch>  Tue, 25 Mar 2014 17:06:04 +0100
+
 velodyne-ros (1:0.1-56) precise; urgency=low
 
   * remake update
