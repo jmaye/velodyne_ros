@@ -1,3 +1,9 @@
+velodyne-ros (1:0.1-58) precise; urgency=low
+
+  * issues with groovy 
+
+ -- Jerome Maye <jerome.maye@mavt.ethz.ch>  Thu, 27 Mar 2014 13:43:28 +0100
+
 velodyne-ros (1:0.1-57) precise; urgency=low
 
   * adding pkg-config 
