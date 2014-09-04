@@ -197,6 +197,8 @@ namespace velodyne {
     double _lastPPTimestamp;
     /// Last inter-position packet time
     double _lastInterPPTime;
+    /// Acquisition loop rate
+    double _acquisitionLoopRate;
     /** @}
       */
 

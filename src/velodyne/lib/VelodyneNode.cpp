@@ -27,6 +27,8 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include <ros/rate.h>
+
 #include <snappy.h>
 
 #include <sensor_msgs/PointCloud.h>
@@ -384,6 +386,7 @@ namespace velodyne {
       _acqThreadPP->start();
     }
     Timer timer;
+    ros::Rate loopRate(_acquisitionLoopRate);
     while (_nodeHandle.ok()) {
       try {
         if (!_acqThreadDP->getBuffer().isEmpty()) {
@@ -394,7 +397,8 @@ namespace velodyne {
           const double endAngle = Calibration::deg2rad(
             dp->getDataChunk(DataPacket::mDataChunkNbr - 1).mRotationalInfo /
             (double)DataPacket::mRotationResolution);
-          if ((_lastStartAngle > endAngle || startAngle > endAngle) && _revolutionPacketCounter) {
+          if ((_lastStartAngle > endAngle || startAngle > endAngle) &&
+              _revolutionPacketCounter) {
             _currentPointsPerRevolution = _revolutionPacketCounter * 384;
             _revolutionPacketCounter = 0;
           }
@@ -436,6 +440,7 @@ namespace velodyne {
       }
       _updater.update();
       ros::spinOnce();
+      loopRate.sleep();
     }
   }
 
@@ -443,6 +448,8 @@ namespace velodyne {
     _nodeHandle.param<std::string>("ros/frame_id", _frameId,
       "/velodyne_link");
     _nodeHandle.param<int>("ros/queue_depth", _queueDepth, 100);
+    _nodeHandle.param<double>("ros/acquisition_loop_rate", _acquisitionLoopRate,
+      4000.0);
     _nodeHandle.param<int>("udp_connection/device_port_dp", _devicePortDP,
       2368);
     _nodeHandle.param<int>("udp_connection/device_port_pp", _devicePortPP,

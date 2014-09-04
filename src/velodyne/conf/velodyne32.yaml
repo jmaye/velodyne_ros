@@ -16,3 +16,4 @@ diagnostics:
 ros:
   queue_depth: 100
   frame_id: "/velodyne_link"
+  acquisition_loop_rate: 2083.30
