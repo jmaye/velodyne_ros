@@ -445,11 +445,17 @@ namespace velodyne {
   }
 
   void VelodyneNode::getParameters() {
+    _nodeHandle.param<std::string>("sensor/device_name", _deviceName,
+      "Velodyne HDL-64E S2");
     _nodeHandle.param<std::string>("ros/frame_id", _frameId,
       "/velodyne_link");
     _nodeHandle.param<int>("ros/queue_depth", _queueDepth, 100);
-    _nodeHandle.param<double>("ros/acquisition_loop_rate", _acquisitionLoopRate,
-      4000.0);
+    if (_deviceName == "Velodyne HDL-64E S2")
+      _nodeHandle.param<double>("ros/acquisition_loop_rate",
+        _acquisitionLoopRate, 4166.6);
+    else if (_deviceName == "Velodyne HDL-32E")
+      _nodeHandle.param<double>("ros/acquisition_loop_rate",
+        _acquisitionLoopRate, 2083.30);
     _nodeHandle.param<int>("udp_connection/device_port_dp", _devicePortDP,
       2368);
     _nodeHandle.param<int>("udp_connection/device_port_pp", _devicePortPP,
@@ -474,8 +480,6 @@ namespace velodyne {
     _nodeHandle.param<int>("sensor/buffer_capacity", _bufferCapacity, 100000);
     _nodeHandle.param<double>("sensor/min_distance", _minDistance, 0.9);
     _nodeHandle.param<double>("sensor/max_distance", _maxDistance, 120);
-    _nodeHandle.param<std::string>("sensor/device_name", _deviceName,
-      "Velodyne HDL-64E S2");
     if (_deviceName == "Velodyne HDL-64E S2")
       _nodeHandle.param<std::string>("sensor/calibration_file", _calibFileName,
         "conf/calib-HDL-64E.dat");

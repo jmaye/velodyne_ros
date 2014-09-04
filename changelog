@@ -1,3 +1,9 @@
+velodyne-ros (1:0.1-60) precise; urgency=low
+
+  * small improvement in the frequency 
+
+ -- Jerome Maye <jerome.maye@mavt.ethz.ch>  Thu, 04 Sep 2014 15:10:04 +0200
+
 velodyne-ros (1:0.1-59) UNRELEASED; urgency=medium
 
   * improving the acquisition loop 
