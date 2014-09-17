@@ -211,7 +211,7 @@ namespace velodyne {
     imuMsg->angular_velocity.x = -pp.getGyro2() * M_PI / 180.0;
     imuMsg->angular_velocity.y = pp.getGyro1() * M_PI / 180.0;
     imuMsg->angular_velocity.z = pp.getGyro3() * M_PI / 180.0;
-    imuMsg->linear_acceleration.x = (-pp.getAccel1Y() + pp.getAccel3X()) *
+    imuMsg->linear_acceleration.x = -(pp.getAccel1Y() - pp.getAccel3X()) *
       GRAV_ACC / 2.0;
     imuMsg->linear_acceleration.y = -(pp.getAccel2Y() + pp.getAccel3Y()) *
       GRAV_ACC / 2.0;
