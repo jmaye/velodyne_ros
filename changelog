@@ -1,3 +1,9 @@
+velodyne-ros (1:0.1-62) trusty; urgency=low
+
+  * correcting diagnostics for IMU 
+
+ -- Jerome Maye <jerome.maye@mavt.ethz.ch>  Wed, 17 Sep 2014 10:23:07 +0200
+
 velodyne-ros (1:0.1-61) trusty; urgency=low
 
   * porting to trusty and indigo 

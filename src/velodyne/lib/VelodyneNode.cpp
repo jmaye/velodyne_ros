@@ -221,6 +221,7 @@ namespace velodyne {
       / 3.0;
     _tempPublisher.publish(tempMsg);
     _imuPublisher.publish(imuMsg);
+    _ppFreq->tick();
   }
 
   bool VelodyneNode::setRPM(velodyne::SetRPM::Request& request,
@@ -475,8 +476,9 @@ namespace velodyne {
       _nodeHandle.param<double>("diagnostics/dp_min_freq", _dpMinFreq, 1388.87);
       _nodeHandle.param<double>("diagnostics/dp_max_freq", _dpMaxFreq, 2083.30);
     }
-    _nodeHandle.param<double>("diagnostics/pp_min_freq", _ppMinFreq, 0.1);
-    _nodeHandle.param<double>("diagnostics/pp_max_freq", _ppMaxFreq, 100);
+    // we should have 200Hz +- 20%
+    _nodeHandle.param<double>("diagnostics/pp_min_freq", _ppMinFreq, 160);
+    _nodeHandle.param<double>("diagnostics/pp_max_freq", _ppMaxFreq, 240);
     _nodeHandle.param<int>("sensor/buffer_capacity", _bufferCapacity, 100000);
     _nodeHandle.param<double>("sensor/min_distance", _minDistance, 0.9);
     _nodeHandle.param<double>("sensor/max_distance", _maxDistance, 120);

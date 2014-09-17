@@ -11,8 +11,8 @@ sensor:
 diagnostics:
   dp_min_freq: 1388.87
   dp_max_freq: 2083.30
-  pp_min_freq: 0.1
-  pp_max_freq: 100.0
+  pp_min_freq: 160.0
+  pp_max_freq: 240.0
 ros:
   queue_depth: 100
   frame_id: "/velodyne_link"
