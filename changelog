@@ -1,3 +1,9 @@
+velodyne-ros (1:0.1-64) precise; urgency=low
+
+  * publish stuff on demand 
+
+ -- Jerome Maye <jerome.maye@mavt.ethz.ch>  Wed, 24 Sep 2014 10:23:03 +0200
+
 velodyne-ros (1:0.1-63) trusty; urgency=low
 
   * correcting IMU output 

@@ -144,83 +144,94 @@ namespace velodyne {
 
   void VelodyneNode::publishDataPacket(const ros::Time& timestamp,
       const DataPacket& dp) {
-    VdynePointCloud pointCloud;
-    Converter::toPointCloud(dp, *_calibration, pointCloud, _minDistance,
-      _maxDistance);
-    sensor_msgs::PointCloudPtr rosCloud(new sensor_msgs::PointCloud);
-    rosCloud->header.stamp = timestamp;
-    rosCloud->header.frame_id = _frameId;
-    rosCloud->header.seq = _dataPacketCounter;
-    const size_t numPoints = pointCloud.getSize();
-    rosCloud->points.reserve(numPoints);
-    rosCloud->channels.resize(1);
-    rosCloud->channels[0].name = "intensity";
-    rosCloud->channels[0].values.reserve(numPoints);
-    for (auto it = pointCloud.getPointBegin(); it != pointCloud.getPointEnd();
-        ++it) {
-      geometry_msgs::Point32 rosPoint;
-      rosPoint.x = it->mX;
-      rosPoint.y = it->mY;
-      rosPoint.z = it->mZ;
-      rosCloud->points.push_back(rosPoint);
-      rosCloud->channels[0].values.push_back(it->mIntensity);
-    }
-    _pointCloudPublisher.publish(rosCloud);
-    velodyne::DataPacketMsgPtr dataPacketMsg(new velodyne::DataPacketMsg);
-    dataPacketMsg->header.stamp = timestamp;
-    dataPacketMsg->header.frame_id = _frameId;
-    dataPacketMsg->header.seq = _dataPacketCounter;
-    for (size_t i = 0; i < DataPacket::mDataChunkNbr; ++i) {
-      const DataPacket::DataChunk& dataChunk = dp.getDataChunk(i);
-      dataPacketMsg->dataChunks[i].headerInfo = dataChunk.mHeaderInfo;
-      dataPacketMsg->dataChunks[i].rotationalInfo = dataChunk.mRotationalInfo;
-      for (size_t j = 0; j < DataPacket::DataChunk::mLasersPerPacket; ++j) {
-        dataPacketMsg->dataChunks[i].laserData[j].distance =
-          dataChunk.mLaserData[j].mDistance;
-        dataPacketMsg->dataChunks[i].laserData[j].intensity =
-          dataChunk.mLaserData[j].mIntensity;
+    if (_pointCloudPublisher.getNumSubscribers() > 0) {
+      VdynePointCloud pointCloud;
+      Converter::toPointCloud(dp, *_calibration, pointCloud, _minDistance,
+        _maxDistance);
+      sensor_msgs::PointCloudPtr rosCloud(new sensor_msgs::PointCloud);
+      rosCloud->header.stamp = timestamp;
+      rosCloud->header.frame_id = _frameId;
+      rosCloud->header.seq = _dataPacketCounter;
+      const size_t numPoints = pointCloud.getSize();
+      rosCloud->points.reserve(numPoints);
+      rosCloud->channels.resize(1);
+      rosCloud->channels[0].name = "intensity";
+      rosCloud->channels[0].values.reserve(numPoints);
+      for (auto it = pointCloud.getPointBegin(); it != pointCloud.getPointEnd();
+          ++it) {
+        geometry_msgs::Point32 rosPoint;
+        rosPoint.x = it->mX;
+        rosPoint.y = it->mY;
+        rosPoint.z = it->mZ;
+        rosCloud->points.push_back(rosPoint);
+        rosCloud->channels[0].values.push_back(it->mIntensity);
       }
+      _pointCloudPublisher.publish(rosCloud);
     }
-    _dataPacketPublisher.publish(dataPacketMsg);
-    velodyne::BinarySnappyMsgPtr binarySnappyMsg(new velodyne::BinarySnappyMsg);
-    binarySnappyMsg->header.stamp = timestamp;
-    binarySnappyMsg->header.frame_id = _frameId;
-    binarySnappyMsg->header.seq = _dataPacketCounter++;
-    std::ostringstream binaryStream;
-    dp.writeBinary(binaryStream);
-    std::string binaryStreamSnappy;
-    snappy::Compress(binaryStream.str().data(),
-      binaryStream.str().size(), &binaryStreamSnappy);
-    binarySnappyMsg->data.resize(binaryStreamSnappy.size());
-    std::copy(binaryStreamSnappy.begin(), binaryStreamSnappy.end(),
-      binarySnappyMsg->data.begin());
-    _binarySnappyPublisher.publish(binarySnappyMsg);
+    if (_dataPacketPublisher.getNumSubscribers() > 0) {
+      velodyne::DataPacketMsgPtr dataPacketMsg(new velodyne::DataPacketMsg);
+      dataPacketMsg->header.stamp = timestamp;
+      dataPacketMsg->header.frame_id = _frameId;
+      dataPacketMsg->header.seq = _dataPacketCounter;
+      for (size_t i = 0; i < DataPacket::mDataChunkNbr; ++i) {
+        const DataPacket::DataChunk& dataChunk = dp.getDataChunk(i);
+        dataPacketMsg->dataChunks[i].headerInfo = dataChunk.mHeaderInfo;
+        dataPacketMsg->dataChunks[i].rotationalInfo = dataChunk.mRotationalInfo;
+        for (size_t j = 0; j < DataPacket::DataChunk::mLasersPerPacket; ++j) {
+          dataPacketMsg->dataChunks[i].laserData[j].distance =
+            dataChunk.mLaserData[j].mDistance;
+          dataPacketMsg->dataChunks[i].laserData[j].intensity =
+            dataChunk.mLaserData[j].mIntensity;
+        }
+      }
+      _dataPacketPublisher.publish(dataPacketMsg);
+    }
+    if (_binarySnappyPublisher.getNumSubscribers() > 0) {
+      velodyne::BinarySnappyMsgPtr binarySnappyMsg(
+        new velodyne::BinarySnappyMsg);
+      binarySnappyMsg->header.stamp = timestamp;
+      binarySnappyMsg->header.frame_id = _frameId;
+      binarySnappyMsg->header.seq = _dataPacketCounter++;
+      std::ostringstream binaryStream;
+      dp.writeBinary(binaryStream);
+      std::string binaryStreamSnappy;
+      snappy::Compress(binaryStream.str().data(),
+        binaryStream.str().size(), &binaryStreamSnappy);
+      binarySnappyMsg->data.resize(binaryStreamSnappy.size());
+      std::copy(binaryStreamSnappy.begin(), binaryStreamSnappy.end(),
+        binarySnappyMsg->data.begin());
+      _binarySnappyPublisher.publish(binarySnappyMsg);
+    }
     _dpFreq->tick();
   }
 
   void VelodyneNode::publishPositionPacket(const ros::Time& timestamp,
       const PositionPacket& pp) {
-    sensor_msgs::ImuPtr imuMsg(new sensor_msgs::Imu);
-    imuMsg->header.stamp = timestamp;
-    imuMsg->header.frame_id = _frameId;
-    imuMsg->header.seq = _positionPacketCounter;
-    velodyne::TemperatureMsgPtr tempMsg(new velodyne::TemperatureMsg);
-    tempMsg->header.stamp = timestamp;
-    tempMsg->header.frame_id = _frameId;
-    tempMsg->header.seq = _positionPacketCounter++;
-    imuMsg->angular_velocity.x = -pp.getGyro2() * M_PI / 180.0;
-    imuMsg->angular_velocity.y = pp.getGyro1() * M_PI / 180.0;
-    imuMsg->angular_velocity.z = pp.getGyro3() * M_PI / 180.0;
-    imuMsg->linear_acceleration.x = -(pp.getAccel1Y() - pp.getAccel3X()) *
-      GRAV_ACC / 2.0;
-    imuMsg->linear_acceleration.y = -(pp.getAccel2Y() + pp.getAccel3Y()) *
-      GRAV_ACC / 2.0;
-    imuMsg->linear_acceleration.z = (pp.getAccel1X() + pp.getAccel2X()) *
-      GRAV_ACC / 2.0;
-    tempMsg->temperature = (pp.getTemp1() + pp.getTemp2() + pp.getTemp3())
-      / 3.0;
-    _tempPublisher.publish(tempMsg);
-    _imuPublisher.publish(imuMsg);
+    if (_imuPublisher.getNumSubscribers() > 0) {
+      sensor_msgs::ImuPtr imuMsg(new sensor_msgs::Imu);
+      imuMsg->header.stamp = timestamp;
+      imuMsg->header.frame_id = _frameId;
+      imuMsg->header.seq = _positionPacketCounter;
+      imuMsg->angular_velocity.x = -pp.getGyro2() * M_PI / 180.0;
+      imuMsg->angular_velocity.y = pp.getGyro1() * M_PI / 180.0;
+      imuMsg->angular_velocity.z = pp.getGyro3() * M_PI / 180.0;
+      imuMsg->linear_acceleration.x = -(pp.getAccel1Y() - pp.getAccel3X()) *
+        GRAV_ACC / 2.0;
+      imuMsg->linear_acceleration.y = -(pp.getAccel2Y() + pp.getAccel3Y()) *
+        GRAV_ACC / 2.0;
+      imuMsg->linear_acceleration.z = (pp.getAccel1X() + pp.getAccel2X()) *
+        GRAV_ACC / 2.0;
+      _imuPublisher.publish(imuMsg);
+    }
+    if (_tempPublisher.getNumSubscribers() > 0) {
+      velodyne::TemperatureMsgPtr tempMsg(new velodyne::TemperatureMsg);
+      tempMsg->header.stamp = timestamp;
+      tempMsg->header.frame_id = _frameId;
+      tempMsg->header.seq = _positionPacketCounter++;
+      tempMsg->temperature = (pp.getTemp1() + pp.getTemp2() + pp.getTemp3())
+        / 3.0;
+      _tempPublisher.publish(tempMsg);
+    }
     _ppFreq->tick();
   }
 
