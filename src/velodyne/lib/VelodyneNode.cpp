@@ -26,6 +26,7 @@
 #include <diagnostic_updater/publisher.h>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/make_shared.hpp>
 
 #include <ros/rate.h>
 
@@ -119,15 +120,15 @@ namespace velodyne {
     if (_deviceName == "Velodyne HDL-64E S2")
       _updater.add("Serial connection", this,
         &VelodyneNode::diagnoseSerialConnection);
-    _dpFreq.reset(new diagnostic_updater::HeaderlessTopicDiagnostic(
+    _dpFreq = std::make_shared<diagnostic_updater::HeaderlessTopicDiagnostic>(
       "data_packet", _updater,
       diagnostic_updater::FrequencyStatusParam(&_dpMinFreq, &_dpMaxFreq,
-      0.1, 10)));
+      0.1, 10));
     if (_deviceName == "Velodyne HDL-32E")
-      _ppFreq.reset(new diagnostic_updater::HeaderlessTopicDiagnostic(
+      _ppFreq = std::make_shared<diagnostic_updater::HeaderlessTopicDiagnostic>(
         "imu", _updater,
         diagnostic_updater::FrequencyStatusParam(&_ppMinFreq, &_ppMaxFreq,
-        0.1, 10)));
+        0.1, 10));
     _updater.force_update();
   }
 
@@ -148,7 +149,7 @@ namespace velodyne {
       VdynePointCloud pointCloud;
       Converter::toPointCloud(dp, *_calibration, pointCloud, _minDistance,
         _maxDistance);
-      sensor_msgs::PointCloudPtr rosCloud(new sensor_msgs::PointCloud);
+      auto rosCloud = boost::make_shared<sensor_msgs::PointCloud>();
       rosCloud->header.stamp = timestamp;
       rosCloud->header.frame_id = _frameId;
       rosCloud->header.seq = _dataPacketCounter;
@@ -169,7 +170,7 @@ namespace velodyne {
       _pointCloudPublisher.publish(rosCloud);
     }
     if (_dataPacketPublisher.getNumSubscribers() > 0) {
-      velodyne::DataPacketMsgPtr dataPacketMsg(new velodyne::DataPacketMsg);
+      auto dataPacketMsg = boost::make_shared<velodyne::DataPacketMsg>();
       dataPacketMsg->header.stamp = timestamp;
       dataPacketMsg->header.frame_id = _frameId;
       dataPacketMsg->header.seq = _dataPacketCounter;
@@ -187,8 +188,7 @@ namespace velodyne {
       _dataPacketPublisher.publish(dataPacketMsg);
     }
     if (_binarySnappyPublisher.getNumSubscribers() > 0) {
-      velodyne::BinarySnappyMsgPtr binarySnappyMsg(
-        new velodyne::BinarySnappyMsg);
+      auto binarySnappyMsg = boost::make_shared<velodyne::BinarySnappyMsg>();
       binarySnappyMsg->header.stamp = timestamp;
       binarySnappyMsg->header.frame_id = _frameId;
       binarySnappyMsg->header.seq = _dataPacketCounter++;
@@ -208,7 +208,7 @@ namespace velodyne {
   void VelodyneNode::publishPositionPacket(const ros::Time& timestamp,
       const PositionPacket& pp) {
     if (_imuPublisher.getNumSubscribers() > 0) {
-      sensor_msgs::ImuPtr imuMsg(new sensor_msgs::Imu);
+      auto imuMsg = boost::make_shared<sensor_msgs::Imu>();
       imuMsg->header.stamp = timestamp;
       imuMsg->header.frame_id = _frameId;
       imuMsg->header.seq = _positionPacketCounter;
@@ -224,7 +224,7 @@ namespace velodyne {
       _imuPublisher.publish(imuMsg);
     }
     if (_tempPublisher.getNumSubscribers() > 0) {
-      velodyne::TemperatureMsgPtr tempMsg(new velodyne::TemperatureMsg);
+      auto tempMsg = boost::make_shared<velodyne::TemperatureMsg>();
       tempMsg->header.stamp = timestamp;
       tempMsg->header.frame_id = _frameId;
       tempMsg->header.seq = _positionPacketCounter++;
@@ -359,7 +359,7 @@ namespace velodyne {
 
   void VelodyneNode::spin() {
     std::ifstream calibFile(_calibFileName);
-    _calibration.reset(new Calibration());
+    _calibration = std::make_shared<Calibration>();
     try {
       calibFile >> *_calibration;
     }
@@ -367,8 +367,8 @@ namespace velodyne {
       ROS_WARN_STREAM("IOException: " << e.what());
     }
     if (_deviceName == "Velodyne HDL-64E S2") {
-      _serialConnection.reset(new SerialConnection(_serialDeviceStr,
-        _serialBaudrate));
+      _serialConnection = std::make_shared<SerialConnection>(_serialDeviceStr,
+        _serialBaudrate);
       Controller controller(*_serialConnection);
       try {
         controller.setRPM(_spinRate);
@@ -386,14 +386,15 @@ namespace velodyne {
         ROS_WARN_STREAM("OutOfBoundException: " << e.what());
       }
     }
-    _udpConnectionDP.reset(new UDPConnectionServer(_devicePortDP));
-    _acqThreadDP.reset(new AcquisitionThread<DataPacket>(*_udpConnectionDP));
+    _udpConnectionDP = std::make_shared<UDPConnectionServer>(_devicePortDP);
+    _acqThreadDP =
+      std::make_shared<AcquisitionThread<DataPacket> >(*_udpConnectionDP);
     _acqThreadDP->getBuffer().setCapacity(_bufferCapacity);
     _acqThreadDP->start();
     if (_deviceName == "Velodyne HDL-32E") {
-      _udpConnectionPP.reset(new UDPConnectionServer(_devicePortPP));
-      _acqThreadPP.reset(new AcquisitionThread<PositionPacket>(
-        *_udpConnectionPP));
+      _udpConnectionPP = std::make_shared<UDPConnectionServer>(_devicePortPP);
+      _acqThreadPP = std::make_shared<AcquisitionThread<PositionPacket> >(
+        *_udpConnectionPP);
       _acqThreadPP->getBuffer().setCapacity(_bufferCapacity);
       _acqThreadPP->start();
     }

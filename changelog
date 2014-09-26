@@ -1,3 +1,9 @@
+velodyne-ros (1:0.1-65) precise; urgency=low
+
+  * cleaning up the code 
+
+ -- Jerome Maye <jerome.maye@mavt.ethz.ch>  Fri, 26 Sep 2014 10:54:30 +0200
+
 velodyne-ros (1:0.1-64) precise; urgency=low
 
   * publish stuff on demand 
