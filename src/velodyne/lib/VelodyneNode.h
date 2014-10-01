@@ -199,6 +199,18 @@ namespace velodyne {
     double _lastInterPPTime;
     /// Acquisition loop rate
     double _acquisitionLoopRate;
+    /// Angular velocity x variance
+    double _angularVelocityXVariance;
+    /// Angular velocity y variance
+    double _angularVelocityYVariance;
+    /// Angular velocity z variance
+    double _angularVelocityZVariance;
+    /// Linear acceleration x variance
+    double _linearAccelerationXVariance;
+    /// Linear acceleration y variance
+    double _linearAccelerationYVariance;
+    /// Linear acceleration z variance
+    double _linearAccelerationZVariance;
     /** @}
       */
 

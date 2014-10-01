@@ -215,12 +215,34 @@ namespace velodyne {
       imuMsg->angular_velocity.x = -pp.getGyro2() * M_PI / 180.0;
       imuMsg->angular_velocity.y = pp.getGyro1() * M_PI / 180.0;
       imuMsg->angular_velocity.z = pp.getGyro3() * M_PI / 180.0;
+      imuMsg->angular_velocity_covariance[0] = _angularVelocityXVariance;
+      imuMsg->angular_velocity_covariance[1] = 0.0;
+      imuMsg->angular_velocity_covariance[2] = 0.0;
+      imuMsg->angular_velocity_covariance[3] = 0.0;
+      imuMsg->angular_velocity_covariance[4] = _angularVelocityYVariance;
+      imuMsg->angular_velocity_covariance[5] = 0.0;
+      imuMsg->angular_velocity_covariance[6] = 0.0;
+      imuMsg->angular_velocity_covariance[7] = 0.0;
+      imuMsg->angular_velocity_covariance[8] = _angularVelocityZVariance;
       imuMsg->linear_acceleration.x = -(pp.getAccel1Y() - pp.getAccel3X()) *
         GRAV_ACC / 2.0;
       imuMsg->linear_acceleration.y = -(pp.getAccel2Y() + pp.getAccel3Y()) *
         GRAV_ACC / 2.0;
       imuMsg->linear_acceleration.z = (pp.getAccel1X() + pp.getAccel2X()) *
         GRAV_ACC / 2.0;
+      imuMsg->linear_acceleration_covariance[0] =
+        _linearAccelerationXVariance;
+      imuMsg->linear_acceleration_covariance[1] = 0.0;
+      imuMsg->linear_acceleration_covariance[2] = 0.0;
+      imuMsg->linear_acceleration_covariance[3] = 0.0;
+      imuMsg->linear_acceleration_covariance[4] =
+        _linearAccelerationYVariance;
+      imuMsg->linear_acceleration_covariance[5] = 0.0;
+      imuMsg->linear_acceleration_covariance[6] = 0.0;
+      imuMsg->linear_acceleration_covariance[7] = 0.0;
+      imuMsg->linear_acceleration_covariance[8] =
+        _linearAccelerationZVariance;
+      imuMsg->orientation_covariance[0] = -1.0;
       _imuPublisher.publish(imuMsg);
     }
     if (_tempPublisher.getNumSubscribers() > 0) {
@@ -503,6 +525,18 @@ namespace velodyne {
     else
       ROS_ERROR_STREAM("Unknown device: " << _deviceName);
     _nodeHandle.param<int>("sensor/spin_rate", _spinRate, 300);
+    _nodeHandle.param<double>("sensor/angular_velocity_x_variance",
+      _angularVelocityXVariance, 0.0);
+    _nodeHandle.param<double>("sensor/angular_velocity_y_variance",
+      _angularVelocityYVariance, 0.0);
+    _nodeHandle.param<double>("sensor/angular_velocity_y_variance",
+      _angularVelocityZVariance, 0.0);
+    _nodeHandle.param<double>("sensor/linear_acceleration_x_variance",
+      _linearAccelerationXVariance, 0.0);
+    _nodeHandle.param<double>("sensor/linear_acceleration_y_variance",
+      _linearAccelerationYVariance, 0.0);
+    _nodeHandle.param<double>("sensor/linear_acceleration_z_variance",
+      _linearAccelerationZVariance, 0.0);
     if (_deviceName == "Velodyne HDL-64E S2")
       // from the datasheet
       _targetPointsPerRevolution = 20833.0 * 64.0 / (_spinRate / 60.0);
