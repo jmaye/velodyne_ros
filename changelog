@@ -1,3 +1,9 @@
+velodyne-ros (1:0.1-67) trusty; urgency=medium
+
+  * completing data packet message 
+
+ -- Jerome Maye <jerome.maye@mavt.ethz.ch>  Thu, 02 Oct 2014 13:00:28 +0200
+
 velodyne-ros (1:0.1-66) trusty; urgency=medium
 
   * adding covariance information 

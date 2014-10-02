@@ -174,6 +174,8 @@ namespace velodyne {
       dataPacketMsg->header.stamp = timestamp;
       dataPacketMsg->header.frame_id = _frameId;
       dataPacketMsg->header.seq = _dataPacketCounter;
+      dataPacketMsg->spinCount = dp.getSpinCount();
+      dataPacketMsg->reserved = dp.getReserved();
       for (size_t i = 0; i < DataPacket::mDataChunkNbr; ++i) {
         const DataPacket::DataChunk& dataChunk = dp.getDataChunk(i);
         dataPacketMsg->dataChunks[i].headerInfo = dataChunk.mHeaderInfo;
