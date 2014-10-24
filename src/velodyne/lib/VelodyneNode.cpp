@@ -352,7 +352,7 @@ namespace velodyne {
         _acqThreadDP->getBuffer().getNumDroppedElements());
       status.add("Current points per revolution", _currentPointsPerRevolution);
       status.add("Target points per revolution", _targetPointsPerRevolution);
-      status.add("Inter packet time [s]", _lastInterDPTime);
+      status.add("Inter packet time [ns]", _lastInterDPTime);
       if (std::fabs(_currentPointsPerRevolution - _targetPointsPerRevolution) >
           0.2 * _targetPointsPerRevolution)
         status.summary(diagnostic_msgs::DiagnosticStatus::WARN,
@@ -372,7 +372,7 @@ namespace velodyne {
       status.add("Size", _acqThreadPP->getBuffer().getSize());
       status.add("Dropped elements",
         _acqThreadPP->getBuffer().getNumDroppedElements());
-      status.add("Inter packet time [s]", _lastInterPPTime);
+      status.add("Inter packet time [ns]", _lastInterPPTime);
       status.summary(diagnostic_msgs::DiagnosticStatus::OK,
         "Acquisition thread running");
     }
@@ -443,21 +443,21 @@ namespace velodyne {
             _revolutionPacketCounter++;
           }
           _lastStartAngle = startAngle;
-          const double timestamp = dp->getTimestamp();
+          const int64_t timestamp = dp->getTimestamp();
           if (_lastDPTimestamp)
             _lastInterDPTime = timestamp - _lastDPTimestamp;
           _lastDPTimestamp = timestamp;
-          publishDataPacket(ros::Time(timestamp), *dp);
+          publishDataPacket(ros::Time().fromNSec(timestamp), *dp);
         }
         if (_deviceName == "Velodyne HDL-32E" &&
             !_acqThreadPP->getBuffer().isEmpty()) {
           std::shared_ptr<PositionPacket> pp(
             _acqThreadPP->getBuffer().dequeue());
-          const double timestamp = pp->getTimestamp();
+          const int64_t timestamp = pp->getTimestamp();
           if (_lastPPTimestamp)
             _lastInterPPTime = timestamp - _lastPPTimestamp;
           _lastPPTimestamp = timestamp;
-          publishPositionPacket(ros::Time(timestamp), *pp);
+          publishPositionPacket(ros::Time().fromNSec(timestamp), *pp);
         }
       }
       catch (const IOException& e) {

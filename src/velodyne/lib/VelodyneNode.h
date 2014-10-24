@@ -26,6 +26,7 @@
 
 #include <string>
 #include <memory>
+#include <cstdint>
 
 #include <ros/ros.h>
 #include <diagnostic_updater/diagnostic_updater.h>
@@ -190,13 +191,13 @@ namespace velodyne {
     /// Actual points per revolution
     double _currentPointsPerRevolution;
     /// Last DP timestamp
-    double _lastDPTimestamp;
+    int64_t _lastDPTimestamp;
     /// Last inter-data packet time
-    double _lastInterDPTime;
+    int64_t _lastInterDPTime;
     /// Last position packet timestamp
-    double _lastPPTimestamp;
+    int64_t _lastPPTimestamp;
     /// Last inter-position packet time
-    double _lastInterPPTime;
+    int64_t _lastInterPPTime;
     /// Acquisition loop rate
     double _acquisitionLoopRate;
     /// Angular velocity x variance

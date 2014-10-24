@@ -1,3 +1,9 @@
+velodyne-ros (1:0.1-68) precise; urgency=low
+
+  * changing timestamps from double to integer 
+
+ -- Jerome Maye <jerome.maye@mavt.ethz.ch>  Fri, 24 Oct 2014 11:09:22 +0200
+
 velodyne-ros (1:0.1-67) trusty; urgency=medium
 
   * completing data packet message 
