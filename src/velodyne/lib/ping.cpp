@@ -91,7 +91,7 @@ namespace velodyne {
       res = sendto(s, outPacket, packetLength, 0,
         reinterpret_cast<const struct sockaddr*>(&to), static_cast<socklen_t>(
         sizeof(struct sockaddr_in)));
-      if (res < 0 || res != packetLength)
+      if (res < 0 || res != static_cast<int>(packetLength))
         throw SystemException(errno, "velodyne::ping()::sendto()");
     }
     else
@@ -121,7 +121,7 @@ namespace velodyne {
       if (res < 0)
         throw SystemException(errno, "velodyne::ping()::recvfrom()");
       struct ip* ip = reinterpret_cast<struct ip*>(inPacket);
-      if (res < (sizeof(struct ip) + ICMP_MINLEN))
+      if (res < static_cast<int>(sizeof(struct ip) + ICMP_MINLEN))
         throw IOException("velodyne::ping(): packet too short");
       icp = reinterpret_cast<struct icmp*>(inPacket + sizeof(struct ip));
       if (icp->icmp_type == ICMP_ECHOREPLY) {

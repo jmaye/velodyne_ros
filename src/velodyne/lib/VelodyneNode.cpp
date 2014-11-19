@@ -66,23 +66,23 @@ namespace velodyne {
 
   VelodyneNode::VelodyneNode(const ros::NodeHandle& nh) :
       _nodeHandle(nh),
-      _dataPacketCounter(0),
-      _positionPacketCounter(0),
-      _revolutionPacketCounter(0),
-      _lastStartAngle(0),
-      _currentPointsPerRevolution(0),
+      _dataPacketCounter(0l),
+      _positionPacketCounter(0l),
+      _revolutionPacketCounter(0ul),
+      _lastStartAngle(0.0),
+      _currentPointsPerRevolution(0.0),
       _lastDPTimestamp(0),
       _lastInterDPTime(0),
       _lastPPTimestamp(0),
       _lastInterPPTime(0) {
     getParameters();
-    if (_spinRate < (int)Controller::mMinRPM) {
+    if (_spinRate < static_cast<int>(Controller::mMinRPM)) {
       _spinRate = Controller::mMinRPM;
       ROS_WARN_STREAM("VelodyneNode::VelodyneNode(): the RPMs must lie in "
         "the range [" << Controller::mMinRPM << ", "
         << Controller::mMaxRPM << "]");
     }
-    else if (_spinRate > (int)Controller::mMaxRPM) {
+    else if (_spinRate > static_cast<int>(Controller::mMaxRPM)) {
       _spinRate = Controller::mMaxRPM;
       ROS_WARN_STREAM("VelodyneNode::VelodyneNode(): the RPMs must lie in "
         "the range [" << Controller::mMinRPM << ", "
@@ -145,7 +145,7 @@ namespace velodyne {
 
   void VelodyneNode::publishDataPacket(const ros::Time& timestamp,
       const DataPacket& dp) {
-    if (_pointCloudPublisher.getNumSubscribers() > 0) {
+    if (_pointCloudPublisher.getNumSubscribers() > 0u) {
       VdynePointCloud pointCloud;
       Converter::toPointCloud(dp, *_calibration, pointCloud, _minDistance,
         _maxDistance);
@@ -169,7 +169,7 @@ namespace velodyne {
       }
       _pointCloudPublisher.publish(rosCloud);
     }
-    if (_dataPacketPublisher.getNumSubscribers() > 0) {
+    if (_dataPacketPublisher.getNumSubscribers() > 0u) {
       auto dataPacketMsg = boost::make_shared<velodyne::DataPacketMsg>();
       dataPacketMsg->header.stamp = timestamp;
       dataPacketMsg->header.frame_id = _frameId;
@@ -189,7 +189,7 @@ namespace velodyne {
       }
       _dataPacketPublisher.publish(dataPacketMsg);
     }
-    if (_binarySnappyPublisher.getNumSubscribers() > 0) {
+    if (_binarySnappyPublisher.getNumSubscribers() > 0u) {
       auto binarySnappyMsg = boost::make_shared<velodyne::BinarySnappyMsg>();
       binarySnappyMsg->header.stamp = timestamp;
       binarySnappyMsg->header.frame_id = _frameId;
@@ -209,7 +209,7 @@ namespace velodyne {
 
   void VelodyneNode::publishPositionPacket(const ros::Time& timestamp,
       const PositionPacket& pp) {
-    if (_imuPublisher.getNumSubscribers() > 0) {
+    if (_imuPublisher.getNumSubscribers() > 0u) {
       auto imuMsg = boost::make_shared<sensor_msgs::Imu>();
       imuMsg->header.stamp = timestamp;
       imuMsg->header.frame_id = _frameId;
@@ -247,7 +247,7 @@ namespace velodyne {
       imuMsg->orientation_covariance[0] = -1.0;
       _imuPublisher.publish(imuMsg);
     }
-    if (_tempPublisher.getNumSubscribers() > 0) {
+    if (_tempPublisher.getNumSubscribers() > 0u) {
       auto tempMsg = boost::make_shared<velodyne::TemperatureMsg>();
       tempMsg->header.stamp = timestamp;
       tempMsg->header.frame_id = _frameId;
@@ -262,13 +262,13 @@ namespace velodyne {
   bool VelodyneNode::setRPM(velodyne::SetRPM::Request& request,
       velodyne::SetRPM::Response& response) {
     _spinRate = request.spinRate;
-    if (_spinRate < (int)Controller::mMinRPM) {
+    if (_spinRate < static_cast<int>(Controller::mMinRPM)) {
       _spinRate = Controller::mMinRPM;
       ROS_WARN_STREAM("VelodyneNode::VelodyneNode(): the RPMs must lie in "
         "the range [" << Controller::mMinRPM << ", "
         << Controller::mMaxRPM << "]");
     }
-    else if (_spinRate > (int)Controller::mMaxRPM) {
+    else if (_spinRate > static_cast<int>(Controller::mMaxRPM)) {
       _spinRate = Controller::mMaxRPM;
       ROS_WARN_STREAM("VelodyneNode::VelodyneNode(): the RPMs must lie in "
         "the range [" << Controller::mMinRPM << ", "
@@ -430,14 +430,14 @@ namespace velodyne {
           std::shared_ptr<DataPacket> dp(_acqThreadDP->getBuffer().dequeue());
           const double startAngle = Calibration::deg2rad(
             dp->getDataChunk(0).mRotationalInfo /
-            (double)DataPacket::mRotationResolution);
+            static_cast<double>(DataPacket::mRotationResolution));
           const double endAngle = Calibration::deg2rad(
             dp->getDataChunk(DataPacket::mDataChunkNbr - 1).mRotationalInfo /
-            (double)DataPacket::mRotationResolution);
+            static_cast<double>(DataPacket::mRotationResolution));
           if ((_lastStartAngle > endAngle || startAngle > endAngle) &&
               _revolutionPacketCounter) {
-            _currentPointsPerRevolution = _revolutionPacketCounter * 384;
-            _revolutionPacketCounter = 0;
+            _currentPointsPerRevolution = _revolutionPacketCounter * 384.0;
+            _revolutionPacketCounter = 0ul;
           }
           else {
             _revolutionPacketCounter++;
@@ -501,7 +501,7 @@ namespace velodyne {
       _serialDeviceStr, "/dev/janeth/velodyne");
     _nodeHandle.param<int>("serial_connection/baud_rate", _serialBaudrate,
       115200);
-    _nodeHandle.param<double>("connection/retry_timeout", _retryTimeout, 1);
+    _nodeHandle.param<double>("connection/retry_timeout", _retryTimeout, 1.0);
     if (_deviceName == "Velodyne HDL-64E S2") {
       // we should have 3472.166666667 packets per second +- 20%
       _nodeHandle.param<double>("diagnostics/dp_min_freq", _dpMinFreq, 2777.73);
@@ -513,11 +513,11 @@ namespace velodyne {
       _nodeHandle.param<double>("diagnostics/dp_max_freq", _dpMaxFreq, 2083.30);
     }
     // we should have 200Hz +- 20%
-    _nodeHandle.param<double>("diagnostics/pp_min_freq", _ppMinFreq, 160);
-    _nodeHandle.param<double>("diagnostics/pp_max_freq", _ppMaxFreq, 240);
+    _nodeHandle.param<double>("diagnostics/pp_min_freq", _ppMinFreq, 160.0);
+    _nodeHandle.param<double>("diagnostics/pp_max_freq", _ppMaxFreq, 240.0);
     _nodeHandle.param<int>("sensor/buffer_capacity", _bufferCapacity, 100000);
     _nodeHandle.param<double>("sensor/min_distance", _minDistance, 0.9);
-    _nodeHandle.param<double>("sensor/max_distance", _maxDistance, 120);
+    _nodeHandle.param<double>("sensor/max_distance", _maxDistance, 120.0);
     if (_deviceName == "Velodyne HDL-64E S2")
       _nodeHandle.param<std::string>("sensor/calibration_file", _calibFileName,
         "conf/calib-HDL-64E.dat");

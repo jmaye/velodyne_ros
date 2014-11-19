@@ -1,3 +1,9 @@
+velodyne-ros (1:0.1-70) precise; urgency=low
+
+  * miscellaneous type improvements 
+
+ -- Jerome Maye <jerome.maye@mavt.ethz.ch>  Wed, 19 Nov 2014 16:14:57 +0100
+
 velodyne-ros (1:0.1-69) precise; urgency=low
 
   * adding a minimalistic ping function to estimate communication delay 
