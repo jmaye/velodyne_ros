@@ -120,7 +120,7 @@ namespace velodyne {
       #endif
       if (res < 0)
         throw SystemException(errno, "velodyne::ping()::recvfrom()");
-      struct ip* ip = reinterpret_cast<struct ip*>(inPacket);
+//      struct ip* ip = reinterpret_cast<struct ip*>(inPacket);
       if (res < static_cast<int>(sizeof(struct ip) + ICMP_MINLEN))
         throw IOException("velodyne::ping(): packet too short");
       icp = reinterpret_cast<struct icmp*>(inPacket + sizeof(struct ip));

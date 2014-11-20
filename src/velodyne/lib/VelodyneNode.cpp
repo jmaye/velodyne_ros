@@ -66,9 +66,7 @@ namespace velodyne {
 
   VelodyneNode::VelodyneNode(const ros::NodeHandle& nh) :
       _nodeHandle(nh),
-      _dataPacketCounter(0l),
-      _positionPacketCounter(0l),
-      _revolutionPacketCounter(0ul),
+      _revolutionPacketCounter(0),
       _lastStartAngle(0.0),
       _currentPointsPerRevolution(0.0),
       _lastDPTimestamp(0),
@@ -145,14 +143,13 @@ namespace velodyne {
 
   void VelodyneNode::publishDataPacket(const ros::Time& timestamp,
       const DataPacket& dp) {
-    if (_pointCloudPublisher.getNumSubscribers() > 0u) {
+    if (_pointCloudPublisher.getNumSubscribers() > 0) {
       VdynePointCloud pointCloud;
       Converter::toPointCloud(dp, *_calibration, pointCloud, _minDistance,
         _maxDistance);
       auto rosCloud = boost::make_shared<sensor_msgs::PointCloud>();
       rosCloud->header.stamp = timestamp;
       rosCloud->header.frame_id = _frameId;
-      rosCloud->header.seq = _dataPacketCounter;
       const size_t numPoints = pointCloud.getSize();
       rosCloud->points.reserve(numPoints);
       rosCloud->channels.resize(1);
@@ -169,11 +166,10 @@ namespace velodyne {
       }
       _pointCloudPublisher.publish(rosCloud);
     }
-    if (_dataPacketPublisher.getNumSubscribers() > 0u) {
+    if (_dataPacketPublisher.getNumSubscribers() > 0) {
       auto dataPacketMsg = boost::make_shared<velodyne::DataPacketMsg>();
       dataPacketMsg->header.stamp = timestamp;
       dataPacketMsg->header.frame_id = _frameId;
-      dataPacketMsg->header.seq = _dataPacketCounter;
       dataPacketMsg->spinCount = dp.getSpinCount();
       dataPacketMsg->reserved = dp.getReserved();
       for (size_t i = 0; i < DataPacket::mDataChunkNbr; ++i) {
@@ -189,11 +185,10 @@ namespace velodyne {
       }
       _dataPacketPublisher.publish(dataPacketMsg);
     }
-    if (_binarySnappyPublisher.getNumSubscribers() > 0u) {
+    if (_binarySnappyPublisher.getNumSubscribers() > 0) {
       auto binarySnappyMsg = boost::make_shared<velodyne::BinarySnappyMsg>();
       binarySnappyMsg->header.stamp = timestamp;
       binarySnappyMsg->header.frame_id = _frameId;
-      binarySnappyMsg->header.seq = _dataPacketCounter++;
       std::ostringstream binaryStream;
       dp.writeBinary(binaryStream);
       std::string binaryStreamSnappy;
@@ -209,11 +204,10 @@ namespace velodyne {
 
   void VelodyneNode::publishPositionPacket(const ros::Time& timestamp,
       const PositionPacket& pp) {
-    if (_imuPublisher.getNumSubscribers() > 0u) {
+    if (_imuPublisher.getNumSubscribers() > 0) {
       auto imuMsg = boost::make_shared<sensor_msgs::Imu>();
       imuMsg->header.stamp = timestamp;
       imuMsg->header.frame_id = _frameId;
-      imuMsg->header.seq = _positionPacketCounter;
       imuMsg->angular_velocity.x = -pp.getGyro2() * M_PI / 180.0;
       imuMsg->angular_velocity.y = pp.getGyro1() * M_PI / 180.0;
       imuMsg->angular_velocity.z = pp.getGyro3() * M_PI / 180.0;
@@ -247,11 +241,10 @@ namespace velodyne {
       imuMsg->orientation_covariance[0] = -1.0;
       _imuPublisher.publish(imuMsg);
     }
-    if (_tempPublisher.getNumSubscribers() > 0u) {
+    if (_tempPublisher.getNumSubscribers() > 0) {
       auto tempMsg = boost::make_shared<velodyne::TemperatureMsg>();
       tempMsg->header.stamp = timestamp;
       tempMsg->header.frame_id = _frameId;
-      tempMsg->header.seq = _positionPacketCounter++;
       tempMsg->temperature = (pp.getTemp1() + pp.getTemp2() + pp.getTemp3())
         / 3.0;
       _tempPublisher.publish(tempMsg);
@@ -437,7 +430,7 @@ namespace velodyne {
           if ((_lastStartAngle > endAngle || startAngle > endAngle) &&
               _revolutionPacketCounter) {
             _currentPointsPerRevolution = _revolutionPacketCounter * 384.0;
-            _revolutionPacketCounter = 0ul;
+            _revolutionPacketCounter = 0;
           }
           else {
             _revolutionPacketCounter++;

@@ -14,7 +14,7 @@ remake_project(
   PREFIX velodyne-
   INSTALL /usr
   CONFIGURATION_DESTINATION /etc/velodyne
-  EXTRA_CXX_FLAGS -std=c++0x
+  EXTRA_CXX_FLAGS "-std=c++0x -Wall -Wextra"
 )
 
 remake_var_name(GIT_REVISION_VAR ${REMAKE_PROJECT_NAME} GIT_REVISION)
