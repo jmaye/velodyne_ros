@@ -421,12 +421,12 @@ namespace velodyne {
       try {
         if (!_acqThreadDP->getBuffer().isEmpty()) {
           std::shared_ptr<DataPacket> dp(_acqThreadDP->getBuffer().dequeue());
-          const double startAngle = Calibration::deg2rad(
+          const float startAngle = Calibration::deg2rad(
             dp->getDataChunk(0).mRotationalInfo /
-            static_cast<double>(DataPacket::mRotationResolution));
-          const double endAngle = Calibration::deg2rad(
+            static_cast<float>(DataPacket::mRotationResolution));
+          const float endAngle = Calibration::deg2rad(
             dp->getDataChunk(DataPacket::mDataChunkNbr - 1).mRotationalInfo /
-            static_cast<double>(DataPacket::mRotationResolution));
+            static_cast<float>(DataPacket::mRotationResolution));
           if ((_lastStartAngle > endAngle || startAngle > endAngle) &&
               _revolutionPacketCounter) {
             _currentPointsPerRevolution = _revolutionPacketCounter * 384.0;

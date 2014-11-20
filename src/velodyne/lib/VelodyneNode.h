@@ -183,7 +183,7 @@ namespace velodyne {
     /// Packet counter for one sensor revolution
     size_t _revolutionPacketCounter;
     /// Last starting angle
-    double _lastStartAngle;
+    float _lastStartAngle;
     /// Actual points per revolution
     double _currentPointsPerRevolution;
     /// Last DP timestamp
