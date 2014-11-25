@@ -150,19 +150,19 @@ namespace velodyne {
       auto rosCloud = boost::make_shared<sensor_msgs::PointCloud>();
       rosCloud->header.stamp = timestamp;
       rosCloud->header.frame_id = _frameId;
-      const size_t numPoints = pointCloud.getSize();
+      const auto numPoints = pointCloud.getSize();
       rosCloud->points.reserve(numPoints);
       rosCloud->channels.resize(1);
       rosCloud->channels[0].name = "intensity";
       rosCloud->channels[0].values.reserve(numPoints);
-      for (auto it = pointCloud.getPointBegin(); it != pointCloud.getPointEnd();
-          ++it) {
+      const auto& points = pointCloud.getPoints();
+      for (const auto& point : points) {
         geometry_msgs::Point32 rosPoint;
-        rosPoint.x = it->mX;
-        rosPoint.y = it->mY;
-        rosPoint.z = it->mZ;
+        rosPoint.x = point.mX;
+        rosPoint.y = point.mY;
+        rosPoint.z = point.mZ;
         rosCloud->points.push_back(rosPoint);
-        rosCloud->channels[0].values.push_back(it->mIntensity);
+        rosCloud->channels[0].values.push_back(point.mIntensity);
       }
       _pointCloudPublisher.publish(rosCloud);
     }
@@ -173,7 +173,7 @@ namespace velodyne {
       dataPacketMsg->spinCount = dp.getSpinCount();
       dataPacketMsg->reserved = dp.getReserved();
       for (size_t i = 0; i < DataPacket::mDataChunkNbr; ++i) {
-        const DataPacket::DataChunk& dataChunk = dp.getDataChunk(i);
+        const auto& dataChunk = dp.getDataChunk(i);
         dataPacketMsg->dataChunks[i].headerInfo = dataChunk.mHeaderInfo;
         dataPacketMsg->dataChunks[i].rotationalInfo = dataChunk.mRotationalInfo;
         for (size_t j = 0; j < DataPacket::DataChunk::mLasersPerPacket; ++j) {
@@ -421,10 +421,10 @@ namespace velodyne {
       try {
         if (!_acqThreadDP->getBuffer().isEmpty()) {
           std::shared_ptr<DataPacket> dp(_acqThreadDP->getBuffer().dequeue());
-          const float startAngle = Calibration::deg2rad(
+          const auto startAngle = Calibration::deg2rad(
             dp->getDataChunk(0).mRotationalInfo /
             static_cast<float>(DataPacket::mRotationResolution));
-          const float endAngle = Calibration::deg2rad(
+          const auto endAngle = Calibration::deg2rad(
             dp->getDataChunk(DataPacket::mDataChunkNbr - 1).mRotationalInfo /
             static_cast<float>(DataPacket::mRotationResolution));
           if ((_lastStartAngle > endAngle || startAngle > endAngle) &&
@@ -436,7 +436,7 @@ namespace velodyne {
             _revolutionPacketCounter++;
           }
           _lastStartAngle = startAngle;
-          const int64_t timestamp = dp->getTimestamp();
+          const auto timestamp = dp->getTimestamp();
           if (_lastDPTimestamp)
             _lastInterDPTime = timestamp - _lastDPTimestamp;
           _lastDPTimestamp = timestamp;
@@ -446,7 +446,7 @@ namespace velodyne {
             !_acqThreadPP->getBuffer().isEmpty()) {
           std::shared_ptr<PositionPacket> pp(
             _acqThreadPP->getBuffer().dequeue());
-          const int64_t timestamp = pp->getTimestamp();
+          const auto timestamp = pp->getTimestamp();
           if (_lastPPTimestamp)
             _lastInterPPTime = timestamp - _lastPPTimestamp;
           _lastPPTimestamp = timestamp;
